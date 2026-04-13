@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchasing Backorder Report — MAC Products</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --mac-navy: #1a2332;
+      --mac-navy-light: #243447;
+      --mac-blue: #3b82f6;
+      --mac-light: #f0f4f8;
+      --mac-white: #ffffff;
+      --mac-red: #ef4444;
+      --mac-amber: #f59e0b;
+      --mac-green: #22c55e;
+      --mac-gray: #64748b;
+      --mac-border: #e2e8f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--mac-light);
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--mac-navy);
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo {
+      width: 48px; height: 48px;
+      background: white; border-radius: 10px; padding: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: var(--mac-navy); font-size: 14px;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .header-right { text-align: right; font-size: 12px; color: #94a3b8; }
+    .header-right .report-id { color: #60a5fa; font-weight: 600; }
+
+    /* Summary Cards */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 24px 32px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--mac-navy);
+    }
+    .card-label { font-size: 12px; color: var(--mac-gray); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .card-value { font-size: 28px; font-weight: 700; color: var(--mac-navy); margin-top: 4px; }
+    .card.overdue { border-left-color: var(--mac-red); }
+    .card.overdue .card-value { color: var(--mac-red); }
+
+    /* Controls */
+    .controls {
+      padding: 0 32px 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box {
+      flex: 1; min-width: 250px;
+      padding: 10px 16px;
+      border: 1px solid var(--mac-border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--mac-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+    select.filter {
+      padding: 10px 12px;
+      border: 1px solid var(--mac-border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--mac-navy); color: white; }
+    .btn-primary:hover { background: var(--mac-navy-light); }
+    .btn-export { background: var(--mac-green); color: white; }
+    .btn-export:hover { background: #16a34a; }
+
+    /* Table */
+    .table-container {
+      padding: 0 32px 32px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-size: 13px;
+    }
+    thead { background: var(--mac-navy); color: white; }
+    th {
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th:hover { background: var(--mac-navy-light); }
+    th .sort-arrow { margin-left: 4px; font-size: 10px; }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--mac-border);
+      white-space: nowrap;
+      max-width: 250px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    td.desc-col { max-width: 300px; }
+    tr:hover { background: #f8fafc; }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .badge-open { background: #dcfce7; color: #166534; }
+    .badge-hold { background: #fef3c7; color: #92400e; }
+
+    /* Overdue highlight */
+    tr.overdue td { background: #fef2f2; }
+    tr.overdue:hover td { background: #fee2e2; }
+    .overdue-text { color: var(--mac-red); font-weight: 600; }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px;
+      color: var(--mac-gray);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid var(--mac-border);
+      border-top-color: var(--mac-navy);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      margin: 32px;
+      padding: 20px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      color: var(--mac-red);
+      font-weight: 500;
+    }
+
+    .row-count {
+      padding: 8px 32px;
+      font-size: 13px;
+      color: var(--mac-gray);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">MAC</div>
+      <div>
+        <h1>Purchasing Backorder Report</h1>
+        <div class="header-sub">PURCHASING BACKORDER REPORT CS, Ordered by PART NUMBER, VENDOR NAME</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div>ID: <span class="report-id">ZPOPH</span> &nbsp; Layout: ZPOPHB</div>
+      <div id="report-date">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary" id="summary">
+    <div class="card"><div class="card-label">Total Backorder Lines</div><div class="card-value" id="stat-lines">—</div></div>
+    <div class="card"><div class="card-label">Unique Parts</div><div class="card-value" id="stat-parts">—</div></div>
+    <div class="card"><div class="card-label">Unique Vendors</div><div class="card-value" id="stat-vendors">—</div></div>
+    <div class="card"><div class="card-label">Unique POs</div><div class="card-value" id="stat-pos">—</div></div>
+    <div class="card overdue"><div class="card-label">Overdue Items</div><div class="card-value" id="stat-overdue">—</div></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <input type="text" class="search-box" id="search" placeholder="Search by part, vendor, PO#, description...">
+    <select class="filter" id="filter-status">
+      <option value="">All Statuses</option>
+      <option value="OPEN">OPEN</option>
+      <option value="ON HOLD">ON HOLD</option>
+    </select>
+    <select class="filter" id="filter-planner">
+      <option value="">All Planners</option>
+    </select>
+    <select class="filter" id="filter-overdue">
+      <option value="">All Items</option>
+      <option value="overdue">Overdue Only</option>
+    </select>
+    <button class="btn btn-primary" id="btn-refresh" onclick="loadData()">Refresh</button>
+    <button class="btn btn-export" id="btn-export" onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <!-- Row count -->
+  <div class="row-count" id="row-count"></div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <div>Loading backorder data from M2M...</div>
+    </div>
+    <div id="error" class="error-box" style="display:none"></div>
+    <table id="report-table" style="display:none">
+      <thead>
+        <tr>
+          <th data-col="Part No">Part No <span class="sort-arrow"></span></th>
+          <th data-col="Description">Description <span class="sort-arrow"></span></th>
+          <th data-col="Vendor Part No">Vendor Part No <span class="sort-arrow"></span></th>
+          <th data-col="PO No">PO # <span class="sort-arrow"></span></th>
+          <th data-col="Vendor Name">Vendor Name <span class="sort-arrow"></span></th>
+          <th data-col="PO Status">Status <span class="sort-arrow"></span></th>
+          <th data-col="Planner">Planner <span class="sort-arrow"></span></th>
+          <th data-col="Item No">Item # <span class="sort-arrow"></span></th>
+          <th data-col="PO Date">PO Date <span class="sort-arrow"></span></th>
+          <th data-col="Last Promise Date">Promise Date <span class="sort-arrow"></span></th>
+          <th data-col="PO Qty">PO Qty <span class="sort-arrow"></span></th>
+          <th data-col="U/M">U/M <span class="sort-arrow"></span></th>
+          <th data-col="MAC Order No">MAC Order # <span class="sort-arrow"></span></th>
+          <th data-col="Recv Qty">Recv Qty <span class="sort-arrow"></span></th>
+          <th data-col="Backorder Qty">Backorder Qty <span class="sort-arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let allData = [];
+    let sortCol = 'Part No';
+    let sortAsc = true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    function fmt(d) {
+      if (!d) return '';
+      const dt = new Date(d);
+      if (isNaN(dt)) return '';
+      return dt.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    }
+
+    function num(n) {
+      if (n == null) return '';
+      return Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+
+    function isOverdue(row) {
+      if (!row['Last Promise Date']) return false;
+      const promise = new Date(row['Last Promise Date']);
+      promise.setHours(0, 0, 0, 0);
+      return promise < today;
+    }
+
+    async function loadData() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('report-table').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+
+      try {
+        const res = await fetch('/api/backorder');
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).error || 'Unknown error'}`);
+        const data = await res.json();
+
+        allData = data.rows;
+        document.getElementById('report-date').textContent =
+          `Date: ${new Date(data.generatedAt).toLocaleDateString()} — Time: ${new Date(data.generatedAt).toLocaleTimeString()}`;
+
+        // Populate planner filter
+        const planners = [...new Set(allData.map(r => r['Planner']).filter(Boolean))].sort();
+        const plannerSelect = document.getElementById('filter-planner');
+        plannerSelect.innerHTML = '<option value="">All Planners</option>';
+        planners.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p; opt.textContent = p;
+          plannerSelect.appendChild(opt);
+        });
+
+        updateStats();
+        renderTable();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report-table').style.display = 'table';
+
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Error: ' + err.message;
+      }
+    }
+
+    function getFilteredData() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const status = document.getElementById('filter-status').value;
+      const planner = document.getElementById('filter-planner').value;
+      const overdueOnly = document.getElementById('filter-overdue').value === 'overdue';
+
+      return allData.filter(row => {
+        if (status && row['PO Status'] !== status) return false;
+        if (planner && row['Planner'] !== planner) return false;
+        if (overdueOnly && !isOverdue(row)) return false;
+        if (search) {
+          const haystack = [
+            row['Part No'], row['Description'], row['Vendor Part No'],
+            row['PO No'], row['Vendor Name'], row['Planner'], row['MAC Order No']
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(search)) return false;
+        }
+        return true;
+      });
+    }
+
+    function updateStats() {
+      const data = getFilteredData();
+      document.getElementById('stat-lines').textContent = data.length.toLocaleString();
+      document.getElementById('stat-parts').textContent = new Set(data.map(r => r['Part No'])).size.toLocaleString();
+      document.getElementById('stat-vendors').textContent = new Set(data.map(r => r['Vendor No'])).size.toLocaleString();
+      document.getElementById('stat-pos').textContent = new Set(data.map(r => r['PO No'])).size.toLocaleString();
+      document.getElementById('stat-overdue').textContent = data.filter(isOverdue).length.toLocaleString();
+    }
+
+    function renderTable() {
+      const data = getFilteredData();
+
+      // Sort
+      data.sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+        if (va == null) va = '';
+        if (vb == null) vb = '';
+        if (typeof va === 'number' && typeof vb === 'number') {
+          return sortAsc ? va - vb : vb - va;
+        }
+        if (sortCol.includes('Date')) {
+          const da = new Date(va || 0), db = new Date(vb || 0);
+          return sortAsc ? da - db : db - da;
+        }
+        va = String(va).toLowerCase();
+        vb = String(vb).toLowerCase();
+        return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        const overdue = isOverdue(row);
+        if (overdue) tr.className = 'overdue';
+
+        const statusBadge = row['PO Status'] === 'ON HOLD'
+          ? '<span class="badge badge-hold">ON HOLD</span>'
+          : '<span class="badge badge-open">OPEN</span>';
+
+        const promiseClass = overdue ? ' class="overdue-text"' : '';
+
+        tr.innerHTML = `
+          <td title="${row['Part No'] || ''}">${row['Part No'] || ''}</td>
+          <td class="desc-col" title="${row['Description'] || ''}">${row['Description'] || ''}</td>
+          <td title="${row['Vendor Part No'] || ''}">${row['Vendor Part No'] || ''}</td>
+          <td>${row['PO No'] || ''}</td>
+          <td title="${row['Vendor Name'] || ''}">${row['Vendor Name'] || ''}</td>
+          <td>${statusBadge}</td>
+          <td>${row['Planner'] || ''}</td>
+          <td>${row['Item No'] || ''}</td>
+          <td>${fmt(row['PO Date'])}</td>
+          <td${promiseClass}>${fmt(row['Last Promise Date'])}</td>
+          <td style="text-align:right">${num(row['PO Qty'])}</td>
+          <td>${row['U/M'] || ''}</td>
+          <td>${row['MAC Order No'] || ''}</td>
+          <td style="text-align:right">${num(row['Recv Qty'])}</td>
+          <td style="text-align:right;font-weight:700">${num(row['Backorder Qty'])}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('row-count').textContent =
+        `Showing ${data.length.toLocaleString()} of ${allData.length.toLocaleString()} backorder lines`;
+
+      // Update sort arrows
+      document.querySelectorAll('th').forEach(th => {
+        const arrow = th.querySelector('.sort-arrow');
+        if (th.dataset.col === sortCol) {
+          arrow.textContent = sortAsc ? ' \u25B2' : ' \u25BC';
+        } else {
+          arrow.textContent = '';
+        }
+      });
+
+      updateStats();
+    }
+
+    // Sort on header click
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        if (sortCol === th.dataset.col) {
+          sortAsc = !sortAsc;
+        } else {
+          sortCol = th.dataset.col;
+          sortAsc = true;
+        }
+        renderTable();
+      });
+    });
+
+    // Filter events
+    document.getElementById('search').addEventListener('input', renderTable);
+    document.getElementById('filter-status').addEventListener('change', renderTable);
+    document.getElementById('filter-planner').addEventListener('change', renderTable);
+    document.getElementById('filter-overdue').addEventListener('change', renderTable);
+
+    // CSV export
+    function exportCSV() {
+      const data = getFilteredData();
+      const cols = ['Part No','Description','Vendor Part No','PO No','Vendor No','Vendor Name',
+                    'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
+                    'MAC Order No','Recv Qty','Backorder Qty'];
+      const escCSV = v => {
+        const s = String(v == null ? '' : v);
+        return s.includes(',') || s.includes('"') || s.includes('\n')
+          ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      let csv = cols.join(',') + '\n';
+      data.forEach(row => {
+        csv += cols.map(c => escCSV(c.includes('Date') ? fmt(row[c]) : row[c])).join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MAC_Backorder_Report_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>
