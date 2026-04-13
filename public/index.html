@@ -4,285 +4,544 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Purchasing Backorder Report — MAC Products</title>
+  <link rel="icon" type="image/png" href="/mac_logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --mac-navy: #1a2332;
-      --mac-navy-light: #243447;
-      --mac-blue: #3b82f6;
-      --mac-light: #f0f4f8;
-      --mac-white: #ffffff;
-      --mac-red: #ef4444;
-      --mac-amber: #f59e0b;
-      --mac-green: #22c55e;
-      --mac-gray: #64748b;
-      --mac-border: #e2e8f0;
+      --mac-navy:    #1a365d;
+      --mac-blue:    #2c5aa0;
+      --mac-light:   #f0f4f8;
+      --mac-accent:  #3182ce;
+      --mac-surface: #ffffff;
+      --mac-muted:   #64748b;
+      --mac-border:  #e2e8f0;
+      --mac-slate-50:  #f8fafc;
+      --mac-slate-100: #f1f5f9;
+      --mac-slate-200: #e2e8f0;
+      --mac-slate-400: #94a3b8;
+      --mac-slate-500: #64748b;
+      --mac-slate-600: #475569;
+      --mac-slate-700: #334155;
+      --mac-slate-800: #1e293b;
+      --red-50:    #fef2f2;
+      --red-200:   #fecaca;
+      --red-500:   #ef4444;
+      --red-600:   #dc2626;
+      --orange-50:  #fff7ed;
+      --orange-200: #fed7aa;
+      --orange-600: #ea580c;
+      --orange-500: #f97316;
+      --green-50:  #f0fdf4;
+      --green-200: #bbf7d0;
+      --green-500: #22c55e;
+      --green-600: #16a34a;
+      --blue-50:   #eff6ff;
+      --blue-200:  #bfdbfe;
+      --blue-600:  #2563eb;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
       background: var(--mac-light);
-      color: #1e293b;
+      color: var(--mac-slate-800);
       min-height: 100vh;
     }
 
-    /* Header */
+    .font-mono {
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── View transition animation ── */
+    .view-transition {
+      animation: fadeSlide 0.3s ease-out;
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .view-transition { animation: none; }
+      * { transition-duration: 0.01ms !important; }
+    }
+
+    /* ── Header ── */
     .header {
-      background: var(--mac-navy);
+      background: linear-gradient(180deg, #1a365d 0%, #1e3a5f 100%);
       color: white;
-      padding: 16px 32px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
     .header-logo {
-      width: 48px; height: 48px;
-      background: white; border-radius: 10px; padding: 4px;
+      width: 40px; height: 40px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; color: var(--mac-navy); font-size: 14px;
+      flex-shrink: 0;
     }
-    .header h1 { font-size: 20px; font-weight: 600; }
-    .header-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-    .header-right { text-align: right; font-size: 12px; color: #94a3b8; }
-    .header-right .report-id { color: #60a5fa; font-weight: 600; }
+    .header-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .header-title { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+    .header-sub {
+      font-size: 10px;
+      color: #93c5fd;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 2px;
+    }
+    .header-right { text-align: right; }
+    .header-right .report-id {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #93c5fd;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .header-right .report-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--mac-slate-400);
+      margin-top: 2px;
+    }
+    .header-version {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #93c5fd;
+      background: rgba(255,255,255,0.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-weight: 700;
+    }
 
-    /* Summary Cards */
+    /* ── KPI Cards ── */
     .summary {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
-      padding: 24px 32px;
+      padding: 24px 24px 0;
+    }
+    @media (min-width: 1024px) {
+      .summary { grid-template-columns: repeat(5, 1fr); }
+    }
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .summary { grid-template-columns: repeat(3, 1fr); }
     }
     .card {
-      background: white;
+      background: var(--mac-surface);
       border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--mac-slate-200);
       border-left: 4px solid var(--mac-navy);
     }
-    .card-label { font-size: 12px; color: var(--mac-gray); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-    .card-value { font-size: 28px; font-weight: 700; color: var(--mac-navy); margin-top: 4px; }
-    .card.overdue { border-left-color: var(--mac-red); }
-    .card.overdue .card-value { color: var(--mac-red); }
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--mac-slate-400);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card-value {
+      font-size: 30px;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      color: var(--mac-slate-800);
+      margin-top: 4px;
+      line-height: 1.1;
+    }
+    .card.card-accent { border-left-color: var(--mac-accent); }
+    .card.card-green  { border-left-color: var(--green-500); }
+    .card.card-orange { border-left-color: var(--orange-500); }
+    .card.card-red {
+      border-left-color: var(--red-500);
+    }
+    .card.card-red .card-value { color: var(--red-600); }
 
-    /* Controls */
+    /* ── Controls ── */
     .controls {
-      padding: 0 32px 16px;
+      padding: 20px 24px 0;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
     .search-box {
-      flex: 1; min-width: 250px;
+      flex: 1; min-width: 220px;
       padding: 10px 16px;
-      border: 1px solid var(--mac-border);
-      border-radius: 8px;
+      border: 1px solid var(--mac-slate-200);
+      border-radius: 10px;
       font-size: 14px;
+      font-family: 'DM Sans', system-ui, sans-serif;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--mac-surface);
     }
-    .search-box:focus { border-color: var(--mac-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .search-box:focus {
+      border-color: var(--mac-accent);
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+    }
+    .search-box::placeholder { color: var(--mac-slate-400); }
 
     select.filter {
       padding: 10px 12px;
-      border: 1px solid var(--mac-border);
-      border-radius: 8px;
+      border: 1px solid var(--mac-slate-200);
+      border-radius: 10px;
       font-size: 13px;
-      background: white;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--mac-surface);
       cursor: pointer;
-      min-width: 140px;
+      min-width: 130px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      color: var(--mac-slate-700);
+    }
+    select.filter:focus {
+      border-color: var(--mac-accent);
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
     }
 
     .btn {
       padding: 10px 20px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
+      font-family: 'DM Sans', system-ui, sans-serif;
       cursor: pointer;
       transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn-primary { background: var(--mac-navy); color: white; }
-    .btn-primary:hover { background: var(--mac-navy-light); }
-    .btn-export { background: var(--mac-green); color: white; }
-    .btn-export:hover { background: #16a34a; }
+    .btn-primary {
+      background: var(--mac-navy);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--mac-blue); }
+    .btn-export {
+      background: var(--mac-surface);
+      color: var(--mac-slate-600);
+      border: 1px solid var(--mac-slate-200);
+    }
+    .btn-export:hover { background: var(--mac-slate-50); }
 
-    /* Table */
+    /* ── Row count ── */
+    .row-count {
+      padding: 12px 24px 0;
+      font-size: 12px;
+      color: var(--mac-slate-500);
+      font-weight: 500;
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      padding: 12px 24px 32px;
+    }
     .table-container {
-      padding: 0 32px 32px;
+      background: var(--mac-surface);
+      border-radius: 12px;
+      border: 1px solid var(--mac-slate-200);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .table-scroll {
       overflow-x: auto;
+      max-height: calc(100vh - 320px);
+      overflow-y: auto;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       font-size: 13px;
     }
-    thead { background: var(--mac-navy); color: white; }
+    thead {
+      background: var(--mac-slate-50);
+      border-bottom: 1px solid var(--mac-slate-200);
+    }
     th {
       padding: 12px 14px;
       text-align: left;
-      font-weight: 600;
-      font-size: 11px;
+      font-weight: 700;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      color: var(--mac-slate-600);
       cursor: pointer;
       white-space: nowrap;
       user-select: none;
       position: sticky;
       top: 0;
       z-index: 10;
+      background: var(--mac-slate-50);
+      transition: background 0.15s;
     }
-    th:hover { background: var(--mac-navy-light); }
-    th .sort-arrow { margin-left: 4px; font-size: 10px; }
+    th:hover { background: var(--mac-slate-100); }
+    th .sort-arrow {
+      margin-left: 4px;
+      font-size: 10px;
+      color: var(--mac-accent);
+    }
 
     td {
       padding: 10px 14px;
-      border-bottom: 1px solid var(--mac-border);
       white-space: nowrap;
       max-width: 250px;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--mac-slate-700);
     }
-    td.desc-col { max-width: 300px; }
-    tr:hover { background: #f8fafc; }
+    td.desc-col { max-width: 280px; }
+    tbody tr {
+      border-bottom: 1px solid var(--mac-slate-100);
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(248,250,252,0.6); }
 
-    /* Status badges */
+    /* Numeric columns */
+    td.num { text-align: right; font-family: 'Space Mono', monospace; font-size: 12px; }
+    td.num-bold { text-align: right; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; }
+
+    /* Date columns */
+    td.date-col { font-family: 'Space Mono', monospace; font-size: 11px; }
+
+    /* ── Status badges (design system) ── */
     .badge {
       display: inline-block;
       padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
+      border-radius: 9999px;
+      font-size: 10px;
       font-weight: 700;
+      text-transform: uppercase;
       letter-spacing: 0.3px;
+      border: 1px solid;
     }
-    .badge-open { background: #dcfce7; color: #166534; }
-    .badge-hold { background: #fef3c7; color: #92400e; }
+    .badge-open {
+      background: var(--green-50);
+      color: var(--green-600);
+      border-color: var(--green-200);
+    }
+    .badge-hold {
+      background: var(--orange-50);
+      color: var(--orange-600);
+      border-color: var(--orange-200);
+    }
 
-    /* Overdue highlight */
-    tr.overdue td { background: #fef2f2; }
+    /* ── Overdue highlight ── */
+    tr.overdue td { background: var(--red-50); }
     tr.overdue:hover td { background: #fee2e2; }
-    .overdue-text { color: var(--mac-red); font-weight: 600; }
+    .overdue-text { color: var(--red-600); font-weight: 700; }
 
-    /* Loading */
-    .loading {
+    /* ── PO / Part ID styling ── */
+    td.id-col {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mac-slate-800);
+    }
+
+    /* ── Loading (skeleton) ── */
+    .loading-screen {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 80px;
-      color: var(--mac-gray);
+      padding: 80px 24px;
     }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid var(--mac-border);
-      border-top-color: var(--mac-navy);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .loading-logo {
+      width: 64px; height: 64px;
       margin-bottom: 16px;
+      animation: pulse 1.5s ease-in-out infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .error-box {
-      margin: 32px;
-      padding: 20px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 12px;
-      color: var(--mac-red);
+    .loading-logo img { width: 100%; height: 100%; object-fit: contain; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .loading-text {
+      color: var(--mac-slate-600);
       font-weight: 500;
+      font-size: 14px;
+    }
+    .loading-sub {
+      color: var(--mac-slate-400);
+      font-size: 12px;
+      margin-top: 4px;
     }
 
-    .row-count {
-      padding: 8px 32px;
-      font-size: 13px;
-      color: var(--mac-gray);
+    /* Skeleton rows */
+    .skeleton-row td {
+      padding: 14px;
+    }
+    .skeleton-bar {
+      height: 14px;
+      background: var(--mac-slate-200);
+      border-radius: 6px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .skeleton-bar.w-24 { width: 96px; }
+    .skeleton-bar.w-32 { width: 128px; }
+    .skeleton-bar.w-16 { width: 64px; }
+    .skeleton-bar.w-20 { width: 80px; }
+    .skeleton-bar.w-40 { width: 160px; }
+
+    /* ── Error ── */
+    .error-box {
+      margin: 24px;
+      padding: 20px;
+      background: var(--red-50);
+      border: 1px solid var(--red-200);
+      border-radius: 12px;
+      color: var(--red-600);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--mac-slate-500);
+    }
+    .empty-state svg {
+      width: 48px; height: 48px;
+      margin: 0 auto 16px;
+      color: var(--mac-slate-400);
+    }
+    .empty-state p { font-size: 14px; font-weight: 500; }
+    .empty-state .empty-sub { font-size: 12px; color: var(--mac-slate-400); margin-top: 4px; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 16px 24px 32px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mac-slate-400);
     }
   </style>
 </head>
 <body>
   <!-- Header -->
-  <div class="header">
+  <header class="header">
     <div class="header-left">
-      <div class="header-logo"><img src="/mac_logo.png" alt="MAC Products" style="width:100%;height:100%;object-fit:contain;"></div>
+      <div class="header-logo"><img src="/mac_logo.png" alt="MAC Products"></div>
       <div>
-        <h1>Purchasing Backorder Report</h1>
-        <div class="header-sub">PURCHASING BACKORDER REPORT CS, Ordered by PART NUMBER, VENDOR NAME</div>
+        <div class="header-title">Purchasing Backorder Report</div>
+        <div class="header-sub">Ordered by Part Number, Vendor Name</div>
       </div>
     </div>
     <div class="header-right">
-      <div>ID: <span class="report-id">ZPOPH</span> &nbsp; Layout: ZPOPHB</div>
-      <div id="report-date">Loading...</div>
+      <div>
+        <span class="report-id">ZPOPH</span>
+        <span class="header-version">V1.0.0</span>
+      </div>
+      <div class="report-meta" id="report-date">Loading...</div>
     </div>
-  </div>
+  </header>
 
-  <!-- Summary Cards -->
-  <div class="summary" id="summary">
-    <div class="card"><div class="card-label">Total Backorder Lines</div><div class="card-value" id="stat-lines">—</div></div>
-    <div class="card"><div class="card-label">Unique Parts</div><div class="card-value" id="stat-parts">—</div></div>
-    <div class="card"><div class="card-label">Unique Vendors</div><div class="card-value" id="stat-vendors">—</div></div>
-    <div class="card"><div class="card-label">Unique POs</div><div class="card-value" id="stat-pos">—</div></div>
-    <div class="card overdue"><div class="card-label">Overdue Items</div><div class="card-value" id="stat-overdue">—</div></div>
-  </div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <input type="text" class="search-box" id="search" placeholder="Search by part, vendor, PO#, description...">
-    <select class="filter" id="filter-status">
-      <option value="">All Statuses</option>
-      <option value="OPEN">OPEN</option>
-      <option value="ON HOLD">ON HOLD</option>
-    </select>
-    <select class="filter" id="filter-planner">
-      <option value="">All Planners</option>
-    </select>
-    <select class="filter" id="filter-overdue">
-      <option value="">All Items</option>
-      <option value="overdue">Overdue Only</option>
-    </select>
-    <button class="btn btn-primary" id="btn-refresh" onclick="loadData()">Refresh</button>
-    <button class="btn btn-export" id="btn-export" onclick="exportCSV()">Export CSV</button>
-  </div>
-
-  <!-- Row count -->
-  <div class="row-count" id="row-count"></div>
-
-  <!-- Table -->
-  <div class="table-container">
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <div>Loading backorder data from M2M...</div>
+  <div class="view-transition">
+    <!-- KPI Cards -->
+    <div class="summary" id="summary">
+      <div class="card">
+        <div class="card-label">Total Backorder Lines</div>
+        <div class="card-value" id="stat-lines">&mdash;</div>
+      </div>
+      <div class="card card-accent">
+        <div class="card-label">Unique Parts</div>
+        <div class="card-value" id="stat-parts">&mdash;</div>
+      </div>
+      <div class="card card-green">
+        <div class="card-label">Unique Vendors</div>
+        <div class="card-value" id="stat-vendors">&mdash;</div>
+      </div>
+      <div class="card card-orange">
+        <div class="card-label">Unique POs</div>
+        <div class="card-value" id="stat-pos">&mdash;</div>
+      </div>
+      <div class="card card-red">
+        <div class="card-label">Overdue Items</div>
+        <div class="card-value" id="stat-overdue">&mdash;</div>
+      </div>
     </div>
-    <div id="error" class="error-box" style="display:none"></div>
-    <table id="report-table" style="display:none">
-      <thead>
-        <tr>
-          <th data-col="Part No">Part No <span class="sort-arrow"></span></th>
-          <th data-col="Description">Description <span class="sort-arrow"></span></th>
-          <th data-col="Vendor Part No">Vendor Part No <span class="sort-arrow"></span></th>
-          <th data-col="PO No">PO # <span class="sort-arrow"></span></th>
-          <th data-col="Vendor Name">Vendor Name <span class="sort-arrow"></span></th>
-          <th data-col="PO Status">Status <span class="sort-arrow"></span></th>
-          <th data-col="Planner">Planner <span class="sort-arrow"></span></th>
-          <th data-col="Item No">Item # <span class="sort-arrow"></span></th>
-          <th data-col="PO Date">PO Date <span class="sort-arrow"></span></th>
-          <th data-col="Last Promise Date">Promise Date <span class="sort-arrow"></span></th>
-          <th data-col="PO Qty">PO Qty <span class="sort-arrow"></span></th>
-          <th data-col="U/M">U/M <span class="sort-arrow"></span></th>
-          <th data-col="MAC Order No">MAC Order # <span class="sort-arrow"></span></th>
-          <th data-col="Recv Qty">Recv Qty <span class="sort-arrow"></span></th>
-          <th data-col="Backorder Qty">Backorder Qty <span class="sort-arrow"></span></th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
-    </table>
+
+    <!-- Controls -->
+    <div class="controls">
+      <input type="text" class="search-box" id="search" placeholder="Search part, vendor, PO#, description...">
+      <select class="filter" id="filter-status">
+        <option value="">All Statuses</option>
+        <option value="OPEN">Open</option>
+        <option value="ON HOLD">On Hold</option>
+      </select>
+      <select class="filter" id="filter-planner">
+        <option value="">All Planners</option>
+      </select>
+      <select class="filter" id="filter-overdue">
+        <option value="">All Items</option>
+        <option value="overdue">Overdue Only</option>
+      </select>
+      <button class="btn btn-primary" id="btn-refresh" onclick="loadData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-export" id="btn-export" onclick="exportCSV()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Row count -->
+    <div class="row-count" id="row-count"></div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-container">
+        <!-- Loading state -->
+        <div id="loading" class="loading-screen">
+          <div class="loading-logo"><img src="/mac_logo.png" alt="Loading"></div>
+          <div class="loading-text">Loading backorder data...</div>
+          <div class="loading-sub">Querying M2M ERP database</div>
+        </div>
+
+        <!-- Error state -->
+        <div id="error" class="error-box" style="display:none"></div>
+
+        <!-- Data table -->
+        <div class="table-scroll" id="table-scroll" style="display:none">
+          <table id="report-table">
+            <thead>
+              <tr>
+                <th data-col="Part No">Part No <span class="sort-arrow"></span></th>
+                <th data-col="Description">Description <span class="sort-arrow"></span></th>
+                <th data-col="Vendor Part No">Vendor Part <span class="sort-arrow"></span></th>
+                <th data-col="PO No">PO # <span class="sort-arrow"></span></th>
+                <th data-col="Vendor Name">Vendor Name <span class="sort-arrow"></span></th>
+                <th data-col="PO Status">Status <span class="sort-arrow"></span></th>
+                <th data-col="Planner">Planner <span class="sort-arrow"></span></th>
+                <th data-col="Item No">Item # <span class="sort-arrow"></span></th>
+                <th data-col="PO Date">PO Date <span class="sort-arrow"></span></th>
+                <th data-col="Last Promise Date">Promise Date <span class="sort-arrow"></span></th>
+                <th data-col="PO Qty" style="text-align:right">PO Qty <span class="sort-arrow"></span></th>
+                <th data-col="U/M">U/M <span class="sort-arrow"></span></th>
+                <th data-col="MAC Order No">MAC Order # <span class="sort-arrow"></span></th>
+                <th data-col="Recv Qty" style="text-align:right">Recv Qty <span class="sort-arrow"></span></th>
+                <th data-col="Backorder Qty" style="text-align:right">Backorder <span class="sort-arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">MAC Products Internal System</div>
   </div>
 
   <script>
@@ -296,7 +555,7 @@
       if (!d) return '';
       const dt = new Date(d);
       if (isNaN(dt)) return '';
-      return dt.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+      return dt.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     }
 
     function num(n) {
@@ -311,9 +570,14 @@
       return promise < today;
     }
 
+    function escHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     async function loadData() {
       document.getElementById('loading').style.display = 'flex';
-      document.getElementById('report-table').style.display = 'none';
+      document.getElementById('table-scroll').style.display = 'none';
       document.getElementById('error').style.display = 'none';
 
       try {
@@ -323,7 +587,7 @@
 
         allData = data.rows;
         document.getElementById('report-date').textContent =
-          `Date: ${new Date(data.generatedAt).toLocaleDateString()} — Time: ${new Date(data.generatedAt).toLocaleTimeString()}`;
+          fmt(data.generatedAt) + ' ' + new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         // Populate planner filter
         const planners = [...new Set(allData.map(r => r['Planner']).filter(Boolean))].sort();
@@ -339,12 +603,12 @@
         renderTable();
 
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('report-table').style.display = 'table';
+        document.getElementById('table-scroll').style.display = 'block';
 
       } catch (err) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Error: ' + err.message;
+        document.getElementById('error').textContent = 'Error loading data: ' + err.message;
       }
     }
 
@@ -401,36 +665,47 @@
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
 
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        const overdue = isOverdue(row);
-        if (overdue) tr.className = 'overdue';
+      if (data.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="15">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <p>No backorder items match your filters</p>
+              <div class="empty-sub">Try adjusting your search or filter criteria</div>
+            </div>
+          </td></tr>`;
+      } else {
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          const overdue = isOverdue(row);
+          if (overdue) tr.className = 'overdue';
 
-        const statusBadge = row['PO Status'] === 'ON HOLD'
-          ? '<span class="badge badge-hold">ON HOLD</span>'
-          : '<span class="badge badge-open">OPEN</span>';
+          const statusBadge = row['PO Status'] === 'ON HOLD'
+            ? '<span class="badge badge-hold">On Hold</span>'
+            : '<span class="badge badge-open">Open</span>';
 
-        const promiseClass = overdue ? ' class="overdue-text"' : '';
+          const promiseClass = overdue ? 'date-col overdue-text' : 'date-col';
 
-        tr.innerHTML = `
-          <td title="${row['Part No'] || ''}">${row['Part No'] || ''}</td>
-          <td class="desc-col" title="${row['Description'] || ''}">${row['Description'] || ''}</td>
-          <td title="${row['Vendor Part No'] || ''}">${row['Vendor Part No'] || ''}</td>
-          <td>${row['PO No'] || ''}</td>
-          <td title="${row['Vendor Name'] || ''}">${row['Vendor Name'] || ''}</td>
-          <td>${statusBadge}</td>
-          <td>${row['Planner'] || ''}</td>
-          <td>${row['Item No'] || ''}</td>
-          <td>${fmt(row['PO Date'])}</td>
-          <td${promiseClass}>${fmt(row['Last Promise Date'])}</td>
-          <td style="text-align:right">${num(row['PO Qty'])}</td>
-          <td>${row['U/M'] || ''}</td>
-          <td>${row['MAC Order No'] || ''}</td>
-          <td style="text-align:right">${num(row['Recv Qty'])}</td>
-          <td style="text-align:right;font-weight:700">${num(row['Backorder Qty'])}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+          tr.innerHTML = `
+            <td class="id-col" title="${escHtml(row['Part No'])}">${escHtml(row['Part No'])}</td>
+            <td class="desc-col" title="${escHtml(row['Description'])}">${escHtml(row['Description'])}</td>
+            <td class="font-mono" style="font-size:11px" title="${escHtml(row['Vendor Part No'])}">${escHtml(row['Vendor Part No'])}</td>
+            <td class="id-col">${escHtml(row['PO No'])}</td>
+            <td title="${escHtml(row['Vendor Name'])}">${escHtml(row['Vendor Name'])}</td>
+            <td>${statusBadge}</td>
+            <td class="font-mono" style="font-size:12px;font-weight:700">${escHtml(row['Planner'])}</td>
+            <td class="font-mono" style="font-size:12px">${escHtml(row['Item No'])}</td>
+            <td class="date-col">${fmt(row['PO Date'])}</td>
+            <td class="${promiseClass}">${fmt(row['Last Promise Date'])}</td>
+            <td class="num">${num(row['PO Qty'])}</td>
+            <td>${escHtml(row['U/M'])}</td>
+            <td class="font-mono" style="font-size:11px">${escHtml(row['MAC Order No'])}</td>
+            <td class="num">${num(row['Recv Qty'])}</td>
+            <td class="num-bold">${num(row['Backorder Qty'])}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
 
       document.getElementById('row-count').textContent =
         `Showing ${data.length.toLocaleString()} of ${allData.length.toLocaleString()} backorder lines`;
@@ -438,6 +713,7 @@
       // Update sort arrows
       document.querySelectorAll('th').forEach(th => {
         const arrow = th.querySelector('.sort-arrow');
+        if (!arrow) return;
         if (th.dataset.col === sortCol) {
           arrow.textContent = sortAsc ? ' \u25B2' : ' \u25BC';
         } else {
@@ -467,9 +743,18 @@
     document.getElementById('filter-planner').addEventListener('change', renderTable);
     document.getElementById('filter-overdue').addEventListener('change', renderTable);
 
+    // Keyboard: Ctrl+K / Cmd+K focuses search
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('search').focus();
+      }
+    });
+
     // CSV export
     function exportCSV() {
       const data = getFilteredData();
+      if (data.length === 0) return;
       const cols = ['Part No','Description','Vendor Part No','PO No','Vendor No','Vendor Name',
                     'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
                     'MAC Order No','Recv Qty','Backorder Qty'];
