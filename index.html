@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/mac_logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Purchasing Backorder Report — MAC Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              mac: { navy: '#1a365d', blue: '#2c5aa0', light: '#f0f4f8', accent: '#3182ce' }
+            },
+            fontFamily: {
+              sans: ['DM Sans', 'system-ui', 'sans-serif'],
+              mono: ['Space Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
