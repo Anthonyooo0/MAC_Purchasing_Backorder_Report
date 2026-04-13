@@ -149,7 +149,8 @@ export function initBackorderReport() {
     document.getElementById('error')!.style.display = 'none';
 
     try {
-      const res = await fetch('/api/backorder');
+      const API_URL = import.meta.env.VITE_BACKORDER_API_URL || '/api/backorder';
+      const res = await fetch(API_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).error || 'Unknown error'}`);
       const data = await res.json();
 
