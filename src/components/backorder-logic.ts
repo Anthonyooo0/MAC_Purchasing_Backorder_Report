@@ -173,10 +173,12 @@ export function initBackorderReport() {
       document.getElementById('loading')!.style.display = 'none';
       document.getElementById('table-scroll')!.style.display = 'block';
 
+      window.dispatchEvent(new CustomEvent('backorder-loaded'));
     } catch (err: any) {
       document.getElementById('loading')!.style.display = 'none';
       document.getElementById('error')!.style.display = 'block';
       document.getElementById('error')!.textContent = 'Error loading data: ' + err.message;
+      window.dispatchEvent(new CustomEvent('backorder-loaded', { detail: { error: err.message } }));
     }
   }
 

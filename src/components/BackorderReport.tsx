@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { initBackorderReport } from './backorder-logic';
 import './backorder-report.css';
 
@@ -9,16 +9,30 @@ interface BackorderReportProps {
 
 export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onSignOut }) => {
   const initialized = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const handler = () => setIsLoading(false);
+    window.addEventListener('backorder-loaded', handler);
     if (!initialized.current) {
       initialized.current = true;
       initBackorderReport();
     }
+    return () => window.removeEventListener('backorder-loaded', handler);
   }, []);
 
   return (
     <>
+      {isLoading && (
+        <div className="app-loading-screen">
+          <div className="app-loading-logo">
+            <img src="/mac_logo.png" alt="MAC Logo" />
+          </div>
+          <div className="app-loading-text">Loading Backorder Report</div>
+          <div className="app-loading-sub">Querying M2M ERP database...</div>
+        </div>
+      )}
+      <div style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
       {/* Header */}
       <header className="header">
         <div className="header-left">
@@ -140,6 +154,7 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
         </div>
 
         <div className="footer">MAC Products Internal System</div>
+      </div>
       </div>
     </>
   );

@@ -98,3 +98,9 @@ td.id-col { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 
 .empty-state p { font-size: 14px; font-weight: 500; }
 .empty-state .empty-sub { font-size: 12px; color: var(--mac-slate-400); margin-top: 4px; }
 .footer { text-align: center; padding: 16px 24px 32px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--mac-slate-400); }
+
+.app-loading-screen { position: fixed; inset: 0; background: var(--mac-light); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+.app-loading-logo { width: 80px; height: 80px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; }
+.app-loading-logo img { width: 100%; height: 100%; object-fit: contain; }
+.app-loading-text { color: var(--mac-slate-700); font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+.app-loading-sub { color: var(--mac-slate-500); font-size: 12px; margin-top: 6px; font-family: 'Space Mono', monospace; }
