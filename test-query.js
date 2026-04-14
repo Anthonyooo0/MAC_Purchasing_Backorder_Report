@@ -49,7 +49,6 @@ const BACKORDER_SQL = `
 SELECT
   RTRIM(pi.FPARTNO)       AS [Part No],
   RTRIM(im.FDESCRIPT)     AS [Description],
-  CAST(pi.FDESCRIPT AS NVARCHAR(MAX))  AS [PO Line Description],
   RTRIM(pi.FVPARTNO)      AS [Vendor Part No],
   RTRIM(pi.FPONO)         AS [PO No],
   RTRIM(pm.FVENDNO)       AS [Vendor No],
@@ -64,37 +63,15 @@ SELECT
   pi.FITEMNO              AS [Item No],
   pm.FORDDATE             AS [PO Date],
   pi.FLSTPDATE            AS [Last Promise Date],
-  pi.FORGPDATE            AS [Original Promise Date],
-  pi.FREQDATE             AS [Requested Date],
   pi.FORDQTY              AS [PO Qty],
   RTRIM(pi.FMEASURE)      AS [U/M],
   RTRIM(pi.FJOKEY)        AS [MAC Order No],
-  RTRIM(pi.FSOKEY)        AS [SO No],
-  RTRIM(pi.FSOITM)        AS [SO Item No],
   pi.FRCPQTY              AS [Recv Qty],
-  (pi.FORDQTY - pi.FRCPQTY) AS [Backorder Qty],
-  pi.FBKORDQTY            AS [M2M Backorder Qty],
-  CAST(pi.FCOMMENTS AS NVARCHAR(MAX))  AS [PO Line Comments],
-  RTRIM(so.FCUSTNO)       AS [Customer No],
-  RTRIM(so.FCOMPANY)      AS [Customer Name],
-  RTRIM(so.FCUSTPONO)     AS [Customer PO],
-  RTRIM(so.FSHIPVIA)      AS [Ship Via],
-  RTRIM(so.FESTIMATOR)    AS [Estimator],
-  RTRIM(so.FSTATUS)       AS [SO Status],
-  so.FDUEDATE             AS [SO Due Date],
-  CAST(so.FACKMEMO AS NVARCHAR(MAX))   AS [SO Ack Memo],
-  RTRIM(so.FORDERNAME)    AS [SO Description],
-  CAST(si.FDESCMEMO AS NVARCHAR(MAX))  AS [SO Line Notes],
-  RTRIM(si.FCUSTPART)     AS [Customer Part No],
-  RTRIM(si.FCITEMSTATUS)  AS [SO Line Status],
-  si.FQUANTITY            AS [SO Qty]
+  (pi.FORDQTY - pi.FRCPQTY) AS [Backorder Qty]
 FROM POITEM pi
   INNER JOIN POMAST pm ON pi.FPONO = pm.FPONO
-  LEFT JOIN APVENDX v  ON pm.FVENDNO = v.FVENDNO
+  LEFT JOIN APVENDX v ON pm.FVENDNO = v.FVENDNO
   LEFT JOIN INMASTX im ON RTRIM(pi.FPARTNO) = RTRIM(im.FPARTNO)
-  LEFT JOIN SOMAST  so ON RTRIM(pi.FSOKEY) = RTRIM(so.FSONO)
-  LEFT JOIN SOITEM  si ON RTRIM(pi.FSOKEY) = RTRIM(si.FSONO)
-                      AND RTRIM(pi.FSOITM) = RTRIM(si.FENUMBER)
 WHERE pm.FSTATUS IN ('Open', 'On Hold')
   AND (pi.FORDQTY - pi.FRCPQTY) > 0
 ORDER BY RTRIM(pi.FPARTNO), RTRIM(v.FCOMPANY), RTRIM(pi.FPONO)
