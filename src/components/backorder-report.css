@@ -104,3 +104,21 @@ td.id-col { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 
 .app-loading-logo img { width: 100%; height: 100%; object-fit: contain; }
 .app-loading-text { color: var(--mac-slate-700); font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
 .app-loading-sub { color: var(--mac-slate-500); font-size: 12px; margin-top: 6px; font-family: 'Space Mono', monospace; }
+
+/* Clickable long-text cells */
+td.desc-col, td.clickable-cell { cursor: pointer; transition: background 0.1s; }
+td.desc-col:hover, td.clickable-cell:hover { background: rgba(49,130,206,0.08); }
+td.desc-col:empty, td.clickable-cell:empty { cursor: default; }
+td.desc-col:empty:hover, td.clickable-cell:empty:hover { background: transparent; }
+
+/* Cell detail modal */
+.cell-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.cell-modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(2px); cursor: pointer; }
+.cell-modal-panel { position: relative; background: var(--mac-surface); border-radius: 14px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); width: 100%; max-width: 640px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; animation: fadeSlide 0.2s ease-out; }
+.cell-modal-header { background: linear-gradient(180deg, #1a365d 0%, #1e3a5f 100%); color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cell-modal-label { font-size: 11px; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Mono', monospace; }
+.cell-modal-sub { font-size: 14px; font-weight: 700; color: white; margin-top: 2px; }
+.cell-modal-x { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+.cell-modal-x:hover { background: rgba(255,255,255,0.2); }
+.cell-modal-body { padding: 20px; overflow-y: auto; flex: 1; font-size: 14px; line-height: 1.6; color: var(--mac-slate-800); white-space: pre-wrap; word-break: break-word; font-family: 'DM Sans', system-ui, sans-serif; }
+.cell-modal-body:empty::before { content: '(empty)'; color: var(--mac-slate-400); font-style: italic; }

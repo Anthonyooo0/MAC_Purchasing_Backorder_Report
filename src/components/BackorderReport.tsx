@@ -176,6 +176,21 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
         <div className="footer">MAC Products Internal System</div>
       </div>
       </div>
+
+      {/* Cell detail modal — click any long-text cell to see full content */}
+      <div id="cell-modal" className="cell-modal" style={{ display: 'none' }}>
+        <div className="cell-modal-backdrop" id="cell-modal-close"></div>
+        <div className="cell-modal-panel">
+          <div className="cell-modal-header">
+            <div>
+              <div className="cell-modal-label" id="cell-modal-label">Field</div>
+              <div className="cell-modal-sub" id="cell-modal-sub"></div>
+            </div>
+            <button className="cell-modal-x" id="cell-modal-x" aria-label="Close">×</button>
+          </div>
+          <div className="cell-modal-body" id="cell-modal-body"></div>
+        </div>
+      </div>
     </>
   );
 };

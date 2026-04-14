@@ -246,6 +246,43 @@ export function initBackorderReport() {
     });
   });
 
+  // Click-to-expand modal for long text cells
+  function openCellModal(label: string, subtitle: string, content: string) {
+    const modal = document.getElementById('cell-modal')!;
+    document.getElementById('cell-modal-label')!.textContent = label;
+    document.getElementById('cell-modal-sub')!.textContent = subtitle;
+    document.getElementById('cell-modal-body')!.textContent = content;
+    modal.style.display = 'flex';
+  }
+  function closeCellModal() {
+    document.getElementById('cell-modal')!.style.display = 'none';
+  }
+  document.getElementById('cell-modal-close')?.addEventListener('click', closeCellModal);
+  document.getElementById('cell-modal-x')?.addEventListener('click', closeCellModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCellModal();
+  });
+
+  // Delegate clicks on desc-col cells in the table body
+  document.getElementById('table-body')!.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const td = target.closest('td.desc-col') as HTMLTableCellElement | null;
+    if (!td) return;
+    const content = td.getAttribute('title') || td.textContent || '';
+    if (!content.trim()) return;
+    // Find column header for this cell
+    const tr = td.parentElement as HTMLTableRowElement;
+    const cellIndex = Array.from(tr.children).indexOf(td);
+    const th = document.querySelectorAll('thead th')[cellIndex] as HTMLElement | undefined;
+    const label = th?.dataset.col || 'Detail';
+    // Subtitle: try to show the Part No + PO No context
+    const rowCells = Array.from(tr.children) as HTMLTableCellElement[];
+    const partNo = rowCells[0]?.textContent?.trim() || '';
+    const poNo = rowCells[4]?.textContent?.trim() || '';
+    const subtitle = partNo && poNo ? `${partNo} — PO ${poNo}` : partNo || '';
+    openCellModal(label, subtitle, content);
+  });
+
   document.getElementById('search')!.addEventListener('input', renderTable);
   document.getElementById('filter-status')!.addEventListener('change', renderTable);
   document.getElementById('filter-planner')!.addEventListener('change', renderTable);
