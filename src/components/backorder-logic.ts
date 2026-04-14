@@ -45,8 +45,12 @@ export function initBackorderReport() {
       if (overdueOnly && !isOverdue(row)) return false;
       if (search) {
         const haystack = [
-          row['Part No'], row['Description'], row['Vendor Part No'],
-          row['PO No'], row['Vendor Name'], row['Planner'], row['MAC Order No']
+          row['Part No'], row['Description'], row['PO Line Description'],
+          row['Vendor Part No'], row['PO No'], row['Vendor Name'],
+          row['Planner'], row['MAC Order No'], row['SO No'],
+          row['Customer No'], row['Customer Name'], row['Customer PO'],
+          row['Customer Part No'], row['Estimator'], row['SO Description'],
+          row['SO Line Notes'], row['SO Ack Memo'], row['PO Line Comments']
         ].join(' ').toLowerCase();
         if (!haystack.includes(search)) return false;
       }
@@ -87,7 +91,7 @@ export function initBackorderReport() {
 
     if (data.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="15">
+        <tr><td colspan="35">
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <p>No backorder items match your filters</p>
@@ -109,6 +113,7 @@ export function initBackorderReport() {
         tr.innerHTML = `
           <td class="id-col" title="${escHtml(row['Part No'])}">${escHtml(row['Part No'])}</td>
           <td class="desc-col" title="${escHtml(row['Description'])}">${escHtml(row['Description'])}</td>
+          <td class="desc-col" title="${escHtml(row['PO Line Description'])}">${escHtml(row['PO Line Description'])}</td>
           <td class="font-mono" style="font-size:11px" title="${escHtml(row['Vendor Part No'])}">${escHtml(row['Vendor Part No'])}</td>
           <td class="id-col">${escHtml(row['PO No'])}</td>
           <td title="${escHtml(row['Vendor Name'])}">${escHtml(row['Vendor Name'])}</td>
@@ -117,11 +122,30 @@ export function initBackorderReport() {
           <td class="font-mono" style="font-size:12px">${escHtml(row['Item No'])}</td>
           <td class="date-col">${fmt(row['PO Date'])}</td>
           <td class="${promiseClass}">${fmt(row['Last Promise Date'])}</td>
+          <td class="date-col">${fmt(row['Original Promise Date'])}</td>
+          <td class="date-col">${fmt(row['Requested Date'])}</td>
           <td class="num">${num(row['PO Qty'])}</td>
           <td>${escHtml(row['U/M'])}</td>
           <td class="font-mono" style="font-size:11px">${escHtml(row['MAC Order No'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['SO No'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['SO Item No'])}</td>
           <td class="num">${num(row['Recv Qty'])}</td>
           <td class="num-bold">${num(row['Backorder Qty'])}</td>
+          <td class="num">${num(row['M2M Backorder Qty'])}</td>
+          <td class="desc-col" title="${escHtml(row['PO Line Comments'])}">${escHtml(row['PO Line Comments'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['Customer No'])}</td>
+          <td title="${escHtml(row['Customer Name'])}">${escHtml(row['Customer Name'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['Customer PO'])}</td>
+          <td title="${escHtml(row['Ship Via'])}">${escHtml(row['Ship Via'])}</td>
+          <td class="font-mono" style="font-size:12px;font-weight:700">${escHtml(row['Estimator'])}</td>
+          <td>${escHtml(row['SO Status'])}</td>
+          <td class="date-col">${fmt(row['SO Due Date'])}</td>
+          <td class="desc-col" title="${escHtml(row['SO Ack Memo'])}">${escHtml(row['SO Ack Memo'])}</td>
+          <td class="desc-col" title="${escHtml(row['SO Description'])}">${escHtml(row['SO Description'])}</td>
+          <td class="desc-col" title="${escHtml(row['SO Line Notes'])}">${escHtml(row['SO Line Notes'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['Customer Part No'])}</td>
+          <td>${escHtml(row['SO Line Status'])}</td>
+          <td class="num">${num(row['SO Qty'])}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -185,9 +209,12 @@ export function initBackorderReport() {
   function exportCSV() {
     const data = getFilteredData();
     if (data.length === 0) return;
-    const cols = ['Part No','Description','Vendor Part No','PO No','Vendor No','Vendor Name',
-                  'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
-                  'MAC Order No','Recv Qty','Backorder Qty'];
+    const cols = ['Part No','Description','PO Line Description','Vendor Part No','PO No','Vendor No','Vendor Name',
+                  'PO Status','Planner','Item No','PO Date','Last Promise Date','Original Promise Date','Requested Date',
+                  'PO Qty','U/M','MAC Order No','SO No','SO Item No','Recv Qty','Backorder Qty','M2M Backorder Qty',
+                  'PO Line Comments','Customer No','Customer Name','Customer PO','Ship Via','Estimator',
+                  'SO Status','SO Due Date','SO Ack Memo','SO Description','SO Line Notes',
+                  'Customer Part No','SO Line Status','SO Qty'];
     const escCSV = v => {
       const s = String(v == null ? '' : v);
       return s.includes(',') || s.includes('"') || s.includes('\n')

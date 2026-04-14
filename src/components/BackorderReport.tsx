@@ -132,6 +132,7 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
                   <tr>
                     <th data-col="Part No">Part No <span className="sort-arrow"></span></th>
                     <th data-col="Description">Description <span className="sort-arrow"></span></th>
+                    <th data-col="PO Line Description">PO Line Desc <span className="sort-arrow"></span></th>
                     <th data-col="Vendor Part No">Vendor Part <span className="sort-arrow"></span></th>
                     <th data-col="PO No">PO # <span className="sort-arrow"></span></th>
                     <th data-col="Vendor Name">Vendor Name <span className="sort-arrow"></span></th>
@@ -140,11 +141,30 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
                     <th data-col="Item No">Item # <span className="sort-arrow"></span></th>
                     <th data-col="PO Date">PO Date <span className="sort-arrow"></span></th>
                     <th data-col="Last Promise Date">Promise Date <span className="sort-arrow"></span></th>
+                    <th data-col="Original Promise Date">Orig Promise <span className="sort-arrow"></span></th>
+                    <th data-col="Requested Date">Req Date <span className="sort-arrow"></span></th>
                     <th data-col="PO Qty" style={{ textAlign: 'right' }}>PO Qty <span className="sort-arrow"></span></th>
                     <th data-col="U/M">U/M <span className="sort-arrow"></span></th>
                     <th data-col="MAC Order No">MAC Order # <span className="sort-arrow"></span></th>
+                    <th data-col="SO No">SO # <span className="sort-arrow"></span></th>
+                    <th data-col="SO Item No">SO Item # <span className="sort-arrow"></span></th>
                     <th data-col="Recv Qty" style={{ textAlign: 'right' }}>Recv Qty <span className="sort-arrow"></span></th>
                     <th data-col="Backorder Qty" style={{ textAlign: 'right' }}>Backorder <span className="sort-arrow"></span></th>
+                    <th data-col="M2M Backorder Qty" style={{ textAlign: 'right' }}>M2M BO Qty <span className="sort-arrow"></span></th>
+                    <th data-col="PO Line Comments">PO Comments <span className="sort-arrow"></span></th>
+                    <th data-col="Customer No">Cust # <span className="sort-arrow"></span></th>
+                    <th data-col="Customer Name">Customer <span className="sort-arrow"></span></th>
+                    <th data-col="Customer PO">Cust PO <span className="sort-arrow"></span></th>
+                    <th data-col="Ship Via">Ship Via <span className="sort-arrow"></span></th>
+                    <th data-col="Estimator">Estimator <span className="sort-arrow"></span></th>
+                    <th data-col="SO Status">SO Status <span className="sort-arrow"></span></th>
+                    <th data-col="SO Due Date">SO Due <span className="sort-arrow"></span></th>
+                    <th data-col="SO Ack Memo">SO Ack Memo <span className="sort-arrow"></span></th>
+                    <th data-col="SO Description">SO Desc <span className="sort-arrow"></span></th>
+                    <th data-col="SO Line Notes">SO Line Notes <span className="sort-arrow"></span></th>
+                    <th data-col="Customer Part No">Cust Part # <span className="sort-arrow"></span></th>
+                    <th data-col="SO Line Status">SO Line Status <span className="sort-arrow"></span></th>
+                    <th data-col="SO Qty" style={{ textAlign: 'right' }}>SO Qty <span className="sort-arrow"></span></th>
                   </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
