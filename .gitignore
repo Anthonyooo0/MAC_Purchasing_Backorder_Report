@@ -1,2 +1,10 @@
 node_modules/
 .env
+
+# Azure deployment artifacts (keep local, never commit — contain credentials)
+*.PublishSettings
+deploy.zip
+deploy.mjs
+logs.mjs
+applogs.mjs
+check.mjs
