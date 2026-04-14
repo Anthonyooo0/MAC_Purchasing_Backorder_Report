@@ -104,6 +104,8 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
             <option value="">All Sources</option>
             <option value="MAKE">Make</option>
             <option value="BUY">Buy</option>
+            <option value="STOCK (PURCHASE)">Stock (Purchase)</option>
+            <option value="STOCK (MAKE)">Stock (Make)</option>
             <option value="STOCK">Stock</option>
             <option value="PHANTOM">Phantom</option>
           </select>

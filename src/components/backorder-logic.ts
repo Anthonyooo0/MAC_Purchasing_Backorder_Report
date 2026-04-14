@@ -111,8 +111,9 @@ export function initBackorderReport() {
         const promiseClass = overdue ? 'date-col overdue-text' : 'date-col';
 
         const src = row['Source'];
+        const srcSlug = String(src || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const sourceBadge = src
-          ? `<span class="badge badge-source badge-source-${String(src).toLowerCase()}">${escHtml(src)}</span>`
+          ? `<span class="badge badge-source badge-source-${srcSlug}">${escHtml(src)}</span>`
           : '';
 
         tr.innerHTML = `
