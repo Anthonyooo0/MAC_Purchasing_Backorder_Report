@@ -43,6 +43,13 @@ const BACKORDER_SQL = `
 SELECT
   RTRIM(pi.FPARTNO)       AS [Part No],
   RTRIM(im.FDESCRIPT)     AS [Description],
+  CASE RTRIM(im.FSOURCE)
+    WHEN 'M' THEN 'MAKE'
+    WHEN 'B' THEN 'BUY'
+    WHEN 'S' THEN 'STOCK'
+    WHEN 'P' THEN 'PHANTOM'
+    ELSE RTRIM(im.FSOURCE)
+  END                     AS [Source],
   RTRIM(pi.FVPARTNO)      AS [Vendor Part No],
   RTRIM(pi.FPONO)         AS [PO No],
   RTRIM(pm.FVENDNO)       AS [Vendor No],

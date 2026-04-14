@@ -100,6 +100,13 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
           <select className="filter" id="filter-planner">
             <option value="">All Planners</option>
           </select>
+          <select className="filter" id="filter-source">
+            <option value="">All Sources</option>
+            <option value="MAKE">Make</option>
+            <option value="BUY">Buy</option>
+            <option value="STOCK">Stock</option>
+            <option value="PHANTOM">Phantom</option>
+          </select>
           <select className="filter" id="filter-overdue">
             <option value="">All Items</option>
             <option value="overdue">Overdue Only</option>
@@ -132,6 +139,7 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
                   <tr>
                     <th data-col="Part No">Part No <span className="sort-arrow"></span></th>
                     <th data-col="Description">Description <span className="sort-arrow"></span></th>
+                    <th data-col="Source">Source <span className="sort-arrow"></span></th>
                     <th data-col="Vendor Part No">Vendor Part <span className="sort-arrow"></span></th>
                     <th data-col="PO No">PO # <span className="sort-arrow"></span></th>
                     <th data-col="Vendor Name">Vendor Name <span className="sort-arrow"></span></th>

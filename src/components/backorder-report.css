@@ -81,6 +81,11 @@ td.date-col { font-family: 'Space Mono', monospace; font-size: 11px; }
 .badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid; }
 .badge-open { background: var(--green-50); color: var(--green-600); border-color: var(--green-200); }
 .badge-hold { background: var(--orange-50); color: var(--orange-600); border-color: var(--orange-200); }
+.badge-source { font-size: 10px; padding: 2px 8px; letter-spacing: 0.3px; }
+.badge-source-make    { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badge-source-buy     { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.badge-source-stock   { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+.badge-source-phantom { background: var(--mac-slate-100); color: var(--mac-slate-600); border-color: var(--mac-slate-200); }
 tr.overdue td { background: var(--red-50); }
 tr.overdue:hover td { background: #fee2e2; }
 .overdue-text { color: var(--red-600); font-weight: 700; }

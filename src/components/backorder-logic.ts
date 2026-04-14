@@ -37,11 +37,13 @@ export function initBackorderReport() {
     const search = (document.getElementById('search') as HTMLInputElement).value.toLowerCase();
     const status = (document.getElementById('filter-status') as HTMLSelectElement).value;
     const planner = (document.getElementById('filter-planner') as HTMLSelectElement).value;
+    const source = (document.getElementById('filter-source') as HTMLSelectElement).value;
     const overdueOnly = (document.getElementById('filter-overdue') as HTMLSelectElement).value === 'overdue';
 
     return allData.filter(row => {
       if (status && row['PO Status'] !== status) return false;
       if (planner && row['Planner'] !== planner) return false;
+      if (source && row['Source'] !== source) return false;
       if (overdueOnly && !isOverdue(row)) return false;
       if (search) {
         const haystack = [
@@ -87,7 +89,7 @@ export function initBackorderReport() {
 
     if (data.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="15">
+        <tr><td colspan="16">
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <p>No backorder items match your filters</p>
@@ -106,9 +108,15 @@ export function initBackorderReport() {
 
         const promiseClass = overdue ? 'date-col overdue-text' : 'date-col';
 
+        const src = row['Source'];
+        const sourceBadge = src
+          ? `<span class="badge badge-source badge-source-${String(src).toLowerCase()}">${escHtml(src)}</span>`
+          : '';
+
         tr.innerHTML = `
           <td class="id-col" title="${escHtml(row['Part No'])}">${escHtml(row['Part No'])}</td>
           <td class="desc-col" title="${escHtml(row['Description'])}">${escHtml(row['Description'])}</td>
+          <td>${sourceBadge}</td>
           <td class="font-mono" style="font-size:11px" title="${escHtml(row['Vendor Part No'])}">${escHtml(row['Vendor Part No'])}</td>
           <td class="id-col">${escHtml(row['PO No'])}</td>
           <td title="${escHtml(row['Vendor Name'])}">${escHtml(row['Vendor Name'])}</td>
@@ -185,7 +193,7 @@ export function initBackorderReport() {
   function exportCSV() {
     const data = getFilteredData();
     if (data.length === 0) return;
-    const cols = ['Part No','Description','Vendor Part No','PO No','Vendor No','Vendor Name',
+    const cols = ['Part No','Description','Source','Vendor Part No','PO No','Vendor No','Vendor Name',
                   'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
                   'MAC Order No','Recv Qty','Backorder Qty'];
     const escCSV = v => {
@@ -259,6 +267,7 @@ export function initBackorderReport() {
   document.getElementById('search')!.addEventListener('input', renderTable);
   document.getElementById('filter-status')!.addEventListener('change', renderTable);
   document.getElementById('filter-planner')!.addEventListener('change', renderTable);
+  document.getElementById('filter-source')!.addEventListener('change', renderTable);
   document.getElementById('filter-overdue')!.addEventListener('change', renderTable);
   document.getElementById('btn-refresh')!.addEventListener('click', loadData);
   document.getElementById('btn-export')!.addEventListener('click', exportCSV);
