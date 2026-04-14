@@ -66,6 +66,8 @@ SELECT
     WHEN 'P' THEN 'PHANTOM'
     ELSE RTRIM(im.FSOURCE)
   END                     AS [Source],
+  RTRIM(im.FPRODCL)       AS [Product Class Code],
+  RTRIM(pc.FPC_NAME)      AS [Product Class],
   RTRIM(pi.FVPARTNO)      AS [Vendor Part No],
   RTRIM(pi.FPONO)         AS [PO No],
   RTRIM(pm.FVENDNO)       AS [Vendor No],
@@ -89,6 +91,7 @@ FROM POITEM pi
   INNER JOIN POMAST pm ON pi.FPONO = pm.FPONO
   LEFT JOIN APVENDX v ON pm.FVENDNO = v.FVENDNO
   LEFT JOIN INMASTX im ON RTRIM(pi.FPARTNO) = RTRIM(im.FPARTNO)
+  LEFT JOIN INPROD pc ON RTRIM(im.FPRODCL) = RTRIM(pc.FPC_NUMBER)
 WHERE pm.FSTATUS IN ('Open', 'On Hold')
   AND (pi.FORDQTY - pi.FRCPQTY) > 0
 ORDER BY RTRIM(pi.FPARTNO), RTRIM(v.FCOMPANY), RTRIM(pi.FPONO)

@@ -38,12 +38,14 @@ export function initBackorderReport() {
     const status = (document.getElementById('filter-status') as HTMLSelectElement).value;
     const planner = (document.getElementById('filter-planner') as HTMLSelectElement).value;
     const source = (document.getElementById('filter-source') as HTMLSelectElement).value;
+    const prodclass = (document.getElementById('filter-prodclass') as HTMLSelectElement).value;
     const overdueOnly = (document.getElementById('filter-overdue') as HTMLSelectElement).value === 'overdue';
 
     return allData.filter(row => {
       if (status && row['PO Status'] !== status) return false;
       if (planner && row['Planner'] !== planner) return false;
       if (source && row['Source'] !== source) return false;
+      if (prodclass && row['Product Class Code'] !== prodclass) return false;
       if (overdueOnly && !isOverdue(row)) return false;
       if (search) {
         const haystack = [
@@ -89,7 +91,7 @@ export function initBackorderReport() {
 
     if (data.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="16">
+        <tr><td colspan="17">
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <p>No backorder items match your filters</p>
@@ -117,6 +119,7 @@ export function initBackorderReport() {
           <td class="id-col" title="${escHtml(row['Part No'])}">${escHtml(row['Part No'])}</td>
           <td class="desc-col" title="${escHtml(row['Description'])}">${escHtml(row['Description'])}</td>
           <td>${sourceBadge}</td>
+          <td class="font-mono" style="font-size:11px" title="${escHtml(row['Product Class'] || row['Product Class Code'])}">${escHtml(row['Product Class Code'])}${row['Product Class'] ? ` <span style="color:#64748b">· ${escHtml(row['Product Class'])}</span>` : ''}</td>
           <td class="font-mono" style="font-size:11px" title="${escHtml(row['Vendor Part No'])}">${escHtml(row['Vendor Part No'])}</td>
           <td class="id-col">${escHtml(row['PO No'])}</td>
           <td title="${escHtml(row['Vendor Name'])}">${escHtml(row['Vendor Name'])}</td>
@@ -175,6 +178,22 @@ export function initBackorderReport() {
         plannerSelect.appendChild(opt);
       });
 
+      // Populate product class filter (code + friendly name)
+      const pcMap: Record<string, string> = {};
+      for (const r of allData) {
+        const code = r['Product Class Code'];
+        if (code && !pcMap[code]) pcMap[code] = r['Product Class'] || code;
+      }
+      const pcEntries = Object.entries(pcMap).sort((a, b) => a[0].localeCompare(b[0]));
+      const pcSelect = document.getElementById('filter-prodclass') as HTMLSelectElement;
+      pcSelect.innerHTML = '<option value="">All Product Classes</option>';
+      pcEntries.forEach(([code, name]) => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = name && name !== code ? `${code} — ${name}` : code;
+        pcSelect.appendChild(opt);
+      });
+
       updateStats();
       renderTable();
 
@@ -193,7 +212,8 @@ export function initBackorderReport() {
   function exportCSV() {
     const data = getFilteredData();
     if (data.length === 0) return;
-    const cols = ['Part No','Description','Source','Vendor Part No','PO No','Vendor No','Vendor Name',
+    const cols = ['Part No','Description','Source','Product Class Code','Product Class',
+                  'Vendor Part No','PO No','Vendor No','Vendor Name',
                   'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
                   'MAC Order No','Recv Qty','Backorder Qty'];
     const escCSV = v => {
@@ -268,6 +288,7 @@ export function initBackorderReport() {
   document.getElementById('filter-status')!.addEventListener('change', renderTable);
   document.getElementById('filter-planner')!.addEventListener('change', renderTable);
   document.getElementById('filter-source')!.addEventListener('change', renderTable);
+  document.getElementById('filter-prodclass')!.addEventListener('change', renderTable);
   document.getElementById('filter-overdue')!.addEventListener('change', renderTable);
   document.getElementById('btn-refresh')!.addEventListener('click', loadData);
   document.getElementById('btn-export')!.addEventListener('click', exportCSV);
