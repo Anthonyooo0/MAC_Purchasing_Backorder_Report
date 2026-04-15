@@ -72,12 +72,38 @@ SELECT
   RTRIM(pi.FMEASURE)      AS [U/M],
   RTRIM(pi.FJOKEY)        AS [MAC Order No],
   pi.FRCPQTY              AS [Recv Qty],
-  (pi.FORDQTY - pi.FRCPQTY) AS [Backorder Qty]
+  (pi.FORDQTY - pi.FRCPQTY) AS [Backorder Qty],
+  oh.TotalOnHand          AS [On Hand Qty],
+  oh.Locations            AS [On Hand Locations],
+  oh.Bins                 AS [On Hand Bins],
+  oh.Lots                 AS [On Hand Lots],
+  oh.EarliestExpiration   AS [Earliest Lot Expiration],
+  oh.Revisions            AS [On Hand Revisions],
+  oh.Facilities           AS [On Hand Facilities],
+  oh.OnHandDetail         AS [On Hand Detail]
 FROM POITEM pi
   INNER JOIN POMAST pm ON pi.FPONO = pm.FPONO
   LEFT JOIN APVENDX v ON pm.FVENDNO = v.FVENDNO
   LEFT JOIN INMASTX im ON RTRIM(pi.FPARTNO) = RTRIM(im.FPARTNO)
   LEFT JOIN INPROD pc ON RTRIM(im.FPRODCL) = RTRIM(pc.FPC_NUMBER)
+  LEFT JOIN (
+    SELECT
+      RTRIM(FPARTNO) AS FPARTNO,
+      SUM(FONHAND)   AS TotalOnHand,
+      STRING_AGG(NULLIF(RTRIM(FLOCATION), ''), ', ')   WITHIN GROUP (ORDER BY FLOCATION) AS Locations,
+      STRING_AGG(NULLIF(RTRIM(FBINNO), ''),    ', ')   WITHIN GROUP (ORDER BY FBINNO)    AS Bins,
+      STRING_AGG(NULLIF(RTRIM(FLOT), ''),      ', ')   WITHIN GROUP (ORDER BY FLOT)      AS Lots,
+      MIN(NULLIF(FEXPDATE, '1900-01-01'))              AS EarliestExpiration,
+      STRING_AGG(NULLIF(RTRIM(FPARTREV), ''),  ', ')   WITHIN GROUP (ORDER BY FPARTREV)  AS Revisions,
+      STRING_AGG(NULLIF(RTRIM(FAC), ''),       ', ')   WITHIN GROUP (ORDER BY FAC)       AS Facilities,
+      STRING_AGG(
+        RTRIM(FLOCATION) + '/' + RTRIM(FBINNO) + ': ' + CAST(FONHAND AS NVARCHAR(20)),
+        ' | '
+      ) WITHIN GROUP (ORDER BY FLOCATION, FBINNO) AS OnHandDetail
+    FROM INONHD
+    WHERE FONHAND <> 0
+    GROUP BY RTRIM(FPARTNO)
+  ) oh ON RTRIM(pi.FPARTNO) = oh.FPARTNO
 WHERE pm.FSTATUS IN ('Open', 'On Hold')
   AND (pi.FORDQTY - pi.FRCPQTY) > 0
 ORDER BY RTRIM(pi.FPARTNO), RTRIM(v.FCOMPANY), RTRIM(pi.FPONO)

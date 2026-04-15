@@ -159,6 +159,14 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
                     <th data-col="MAC Order No">MAC Order # <span className="sort-arrow"></span></th>
                     <th data-col="Recv Qty" style={{ textAlign: 'right' }}>Recv Qty <span className="sort-arrow"></span></th>
                     <th data-col="Backorder Qty" style={{ textAlign: 'right' }}>Backorder <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Qty" style={{ textAlign: 'right' }}>On Hand <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Locations">Locations <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Bins">Bins <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Lots">Lots <span className="sort-arrow"></span></th>
+                    <th data-col="Earliest Lot Expiration">Lot Exp <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Revisions">Revs <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Facilities">Facilities <span className="sort-arrow"></span></th>
+                    <th data-col="On Hand Detail">On Hand Detail <span className="sort-arrow"></span></th>
                   </tr>
                 </thead>
                 <tbody id="table-body"></tbody>

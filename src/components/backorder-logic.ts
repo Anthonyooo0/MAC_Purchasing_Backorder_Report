@@ -91,7 +91,7 @@ export function initBackorderReport() {
 
     if (data.length === 0) {
       tbody.innerHTML = `
-        <tr><td colspan="17">
+        <tr><td colspan="25">
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <p>No backorder items match your filters</p>
@@ -134,6 +134,14 @@ export function initBackorderReport() {
           <td class="font-mono" style="font-size:11px">${escHtml(row['MAC Order No'])}</td>
           <td class="num">${num(row['Recv Qty'])}</td>
           <td class="num-bold">${num(row['Backorder Qty'])}</td>
+          <td class="num">${num(row['On Hand Qty'])}</td>
+          <td class="desc-col" title="${escHtml(row['On Hand Locations'])}">${escHtml(row['On Hand Locations'])}</td>
+          <td class="desc-col" title="${escHtml(row['On Hand Bins'])}">${escHtml(row['On Hand Bins'])}</td>
+          <td class="desc-col" title="${escHtml(row['On Hand Lots'])}">${escHtml(row['On Hand Lots'])}</td>
+          <td class="date-col">${fmt(row['Earliest Lot Expiration'])}</td>
+          <td class="font-mono" style="font-size:11px">${escHtml(row['On Hand Revisions'])}</td>
+          <td class="desc-col" title="${escHtml(row['On Hand Facilities'])}">${escHtml(row['On Hand Facilities'])}</td>
+          <td class="desc-col" title="${escHtml(row['On Hand Detail'])}">${escHtml(row['On Hand Detail'])}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -216,7 +224,9 @@ export function initBackorderReport() {
     const cols = ['Part No','Description','Source','Product Class Code','Product Class',
                   'Vendor Part No','PO No','Vendor No','Vendor Name',
                   'PO Status','Planner','Item No','PO Date','Last Promise Date','PO Qty','U/M',
-                  'MAC Order No','Recv Qty','Backorder Qty'];
+                  'MAC Order No','Recv Qty','Backorder Qty',
+                  'On Hand Qty','On Hand Locations','On Hand Bins','On Hand Lots',
+                  'Earliest Lot Expiration','On Hand Revisions','On Hand Facilities','On Hand Detail'];
     const escCSV = v => {
       const s = String(v == null ? '' : v);
       return s.includes(',') || s.includes('"') || s.includes('\n')
