@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="font-bold text-sm truncate uppercase">MAC REPORTS</h1>
+              <h1 className="font-bold text-sm truncate uppercase">MAC Custom Reports</h1>
               <p className="text-blue-200 text-[10px] truncate uppercase font-bold tracking-tighter">
                 {userEmail}
               </p>

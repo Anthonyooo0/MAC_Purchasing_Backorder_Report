@@ -10,8 +10,8 @@ export const Login: React.FC = () => {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
         <div className="text-center mb-8">
           <img src="/mac_logo.png" className="w-16 h-16 mx-auto mb-4 object-contain" />
-          <h1 className="text-2xl font-bold text-slate-800">Purchasing Backorder Report</h1>
-          <p className="text-slate-500 text-sm mt-1">Sign in with your MAC Products account</p>
+          <h1 className="text-2xl font-bold text-slate-800">MAC Custom Reports</h1>
+          <p className="text-slate-500 text-sm mt-1">Sign in with your MAC account</p>
         </div>
         <button
           onClick={() => instance.loginRedirect(loginRequest)}
