@@ -20,8 +20,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className="sidebar flex flex-col flex-shrink-0 text-white transition-all duration-300"
-      style={{ width: collapsed ? 64 : 256 }}
+      className="flex flex-col flex-shrink-0 text-white transition-all duration-300"
+      style={{
+        width: collapsed ? 64 : 256,
+        background: 'linear-gradient(180deg, #1a365d 0%, #1e3a5f 100%)',
+      }}
     >
       {/* Logo + user info */}
       <div className="p-4 border-b border-white/10">
@@ -58,9 +61,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={r.id}
               onClick={() => onReportChange(r.id)}
               title={collapsed ? r.name : undefined}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all relative ${
                 active
-                  ? 'nav-active text-white bg-white/10'
+                  ? 'text-white bg-white/10 before:content-[""] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[60%] before:bg-blue-400 before:rounded-r'
                   : 'text-blue-200 hover:text-white hover:bg-white/5'
               }`}
             >
