@@ -289,14 +289,7 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
           <div className="goal-card">
             <div className="chart-eyebrow">Shipping Goal</div>
             <div className="chart-title-2">{chartYear}</div>
-
-            <div className="goal-progress-row">
-              <div className="goal-pct">{goalPct.toFixed(1)}%</div>
-              <div className="goal-progress-track">
-                <div className="goal-progress-fill" style={{ width: `${goalPct}%` }} />
-              </div>
-            </div>
-
+            <GoalGauge pct={goalPct} />
             <dl className="goal-dl">
               <div>
                 <dt>Achieved</dt>
@@ -415,4 +408,33 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
     </>
   );
 };
+
+function GoalGauge({ pct }: { pct: number }) {
+  const radius = 80;
+  const circ = Math.PI * radius;
+  const dashOffset = circ - (Math.min(100, pct) / 100) * circ;
+
+  return (
+    <svg viewBox="0 0 200 120" className="goal-gauge">
+      <path
+        d={`M 20 100 A ${radius} ${radius} 0 0 1 180 100`}
+        stroke="#e2e8f0" strokeWidth="14" fill="none" strokeLinecap="round"
+      />
+      <path
+        d={`M 20 100 A ${radius} ${radius} 0 0 1 180 100`}
+        stroke="#1a365d" strokeWidth="14" fill="none" strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={dashOffset}
+        style={{ transition: 'stroke-dashoffset 0.4s ease-out' }}
+      />
+      <text
+        x="100" y="92" textAnchor="middle"
+        fontSize="26" fontWeight="600" fill="#1e293b"
+        style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}
+      >
+        {pct.toFixed(1)}%
+      </text>
+    </svg>
+  );
+}
 
