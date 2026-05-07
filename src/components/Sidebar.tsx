@@ -23,7 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className="flex flex-col flex-shrink-0 text-white transition-all duration-300"
       style={{
         width: collapsed ? 64 : 256,
-        background: 'linear-gradient(180deg, #1a365d 0%, #1e3a5f 100%)',
+        background: '#1a365d',
       }}
     >
       {/* Logo + user info */}
