@@ -407,16 +407,22 @@ export const ImpulseBacklog: React.FC<Props> = ({ userEmail: _userEmail }) => {
 
 function StatusBadge({ code }: { code: string }) {
   if (!code) return null;
-  const colors: Record<string, string> = {
-    O: 'bg-orange',  // Open
-    R: 'bg-blue',    // Released
-    C: 'bg-green',   // Closed
-    S: 'bg-blue',    // Started
-    H: 'bg-red',     // Hold
-    A: 'bg-green',   // Available
-  };
-  const cls = colors[code] || 'bg-slate';
-  return <span className={`status-letter status-${cls}`}>{code}</span>;
+  const tone = statusTone(code);
+  return <span className={`status-pill status-${tone}`}>{code}</span>;
+}
+
+function statusTone(status: string): string {
+  const s = (status || '').toLowerCase();
+  if (s.includes('cancel'))  return 'red';
+  if (s.includes('hold'))    return 'red';
+  if (s.includes('closed'))  return 'green';
+  if (s.includes('shipped')) return 'green';
+  if (s.includes('release')) return 'blue';
+  if (s.includes('avail'))   return 'green';
+  if (s.includes('start'))   return 'orange';
+  if (s.includes('open'))    return 'blue';
+  if (s.includes('pend'))    return 'orange';
+  return 'slate';
 }
 
 function CRBadge({ value }: { value: number }) {

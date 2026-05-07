@@ -60,13 +60,8 @@ SELECT
     WHEN NULLIF(RTRIM(pi.FPONO), '')  IS NOT NULL THEN 'P'
     ELSE ''
   END                                     AS [Supply Type],
-  -- Single-letter status: O=Open, R=Released, C=Closed, S=Started, H=Hold
-  CASE
-    WHEN sr.FAVAILSHIP = 1 THEN 'A'
-    WHEN UPPER(LEFT(RTRIM(sr.FCRELSSTATUS), 1)) IN ('O','R','C','S','H') THEN UPPER(LEFT(RTRIM(sr.FCRELSSTATUS), 1))
-    WHEN UPPER(LEFT(RTRIM(sm.FSTATUS), 1)) IN ('O','R','C','S','H') THEN UPPER(LEFT(RTRIM(sm.FSTATUS), 1))
-    ELSE 'O'
-  END                                     AS [S],
+  -- Full M2M status: prefer release status, fall back to SO status
+  COALESCE(NULLIF(RTRIM(sr.FCRELSSTATUS), ''), RTRIM(sm.FSTATUS)) AS [S],
   CAST(sr.FDELIVERY AS NVARCHAR(MAX))     AS [Last SO/LINE/REL Comment],
   COALESCE(sr.FPRIORITY, sm.FPRIORITY, 0) AS [CR],
   RTRIM(sr.FCRELSSTATUS)                  AS [Release Status],
