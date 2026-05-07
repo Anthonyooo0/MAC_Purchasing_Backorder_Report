@@ -64,7 +64,7 @@ export const BackorderReport: React.FC<BackorderReportProps> = ({ userEmail, onS
         </div>
       </header>
 
-      <div className="view-transition">
+      <div className="view-transition flex-1 overflow-y-auto">
         {/* KPI Cards */}
         <div className="summary" id="summary">
           <div className="card">
