@@ -1,0 +1,84 @@
+/* Impulse Backlog — status letters, CR badges, filter card layout */
+
+.backlog-row {
+  grid-template-columns: 1fr 2fr;
+}
+@media (max-width: 1024px) {
+  .backlog-row { grid-template-columns: 1fr; }
+}
+
+.backlog-gauge-bounds {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--mac-slate-500);
+  margin-top: -8px;
+}
+
+.filter-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid var(--mac-slate-200);
+  padding: 20px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px 16px;
+}
+
+.filter-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mac-slate-500);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.filter.w-full { width: 100%; }
+
+/* Status letter (S column) — single letter on a colored chip */
+.status-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0;
+}
+.status-bg-orange { background: #f97316; }
+.status-bg-blue   { background: #2563eb; }
+.status-bg-green  { background: #16a34a; }
+.status-bg-red    { background: #dc2626; }
+.status-bg-slate  { background: var(--mac-slate-500); }
+
+/* CR badge — priority 1 (low) - 4 (critical), color coded */
+.cr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.cr-1     { background: #16a34a; }   /* low / green */
+.cr-2     { background: #2563eb; }   /* normal / blue */
+.cr-3     { background: #f97316; }   /* high / orange */
+.cr-4     { background: #dc2626; }   /* critical / red */
+.cr-none  {
+  background: transparent;
+  color: var(--mac-slate-400);
+  font-weight: 500;
+}

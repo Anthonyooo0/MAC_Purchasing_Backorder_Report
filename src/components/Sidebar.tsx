@@ -133,6 +133,13 @@ function ReportIcon({ code }: { code: string }) {
       </svg>
     );
   }
+  if (code === 'IMPBACK') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+        <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+      </svg>
+    );
+  }
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
       <path d="M9 17v-2a4 4 0 0 1 4-4h6M3 7h18M3 12h18M3 17h6" />

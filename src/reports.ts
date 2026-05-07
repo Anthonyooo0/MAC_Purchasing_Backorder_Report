@@ -29,6 +29,14 @@ export const REPORTS: ReportDef[] = [
     reportCode: 'IMPSHIP',
     allowedDomains: ['macproducts.net', 'macimpulse.net'],
   },
+  {
+    id: 'impulse-backlog',
+    name: 'Impulse Backlog',
+    shortName: 'Impulse Backlog',
+    description: 'Open MAC Impulse SO releases with backlog value and supply linkage',
+    reportCode: 'IMPBACK',
+    allowedDomains: ['macproducts.net', 'macimpulse.net'],
+  },
 ];
 
 export function reportsForUser(email: string | null): ReportDef[] {
