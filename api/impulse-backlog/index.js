@@ -43,8 +43,8 @@ SELECT
   RTRIM(sr.FSONO)                         AS [SO No],
   sm.FORDERDATE                           AS [Date Entered],
   sr.FDUEDATE                             AS [Due],
-  RTRIM(sm.FCCOMPANY)                     AS [Customer],
-  RTRIM(sm.FCNUMBER)                      AS [Customer No],
+  RTRIM(sm.FCOMPANY)                      AS [Customer],
+  RTRIM(sm.FCUSTNO)                       AS [Customer No],
   RTRIM(sr.FPARTNO)                       AS [Part Number],
   RTRIM(sr.FPARTREV)                      AS [Rev],
   CAST(si.FDESC AS NVARCHAR(MAX))         AS [Description],
@@ -109,7 +109,7 @@ FROM SORELS sr
 WHERE sr.FORDERQTY > COALESCE(sr.FNINVSHIP, 0) + COALESCE(sr.FINVQTY, 0)
   AND RTRIM(sm.FSTATUS) NOT IN ('Closed', 'Cancelled')
   AND (RTRIM(sr.FCRELSSTATUS) IS NULL OR RTRIM(sr.FCRELSSTATUS) NOT IN ('Closed', 'Cancelled'))
-ORDER BY sr.FDUEDATE ASC, sm.FCCOMPANY, sr.FSONO
+ORDER BY sr.FDUEDATE ASC, sm.FCOMPANY, sr.FSONO
 `;
 
 const CORS = {
