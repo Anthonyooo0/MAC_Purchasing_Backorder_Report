@@ -1,4 +1,4 @@
-/* MAC Impulse Shipments — chart + goal gauge layout */
+/* MAC Impulse Shipments — engineering-grade chart + goal styles */
 
 .chart-row {
   display: grid;
@@ -12,27 +12,57 @@
 
 .chart-card,
 .goal-card {
-  background: var(--mac-surface);
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 8px;
   border: 1px solid var(--mac-slate-200);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   padding: 20px;
 }
 
-.chart-title,
-.goal-title {
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.chart-eyebrow {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--mac-slate-500);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.chart-title-2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--mac-slate-800);
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-total {
+  text-align: right;
+}
+.chart-total-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mac-slate-500);
+}
+.chart-total-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mac-slate-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
 }
 
 .bar-chart {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
   height: 200px;
   padding-top: 24px;
 }
@@ -45,65 +75,96 @@
 }
 .bar-value {
   font-size: 10px;
-  font-weight: 700;
-  color: var(--mac-slate-600);
-  font-family: 'Space Mono', monospace;
+  font-weight: 500;
+  color: var(--mac-slate-700);
+  font-variant-numeric: tabular-nums;
   min-height: 14px;
-  margin-bottom: 4px;
-  white-space: nowrap;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
 }
 .bar-track {
   flex: 1;
   width: 100%;
   display: flex;
   align-items: flex-end;
-  background: var(--mac-slate-50);
-  border-radius: 6px 6px 0 0;
 }
 .bar-fill {
   width: 100%;
-  background: linear-gradient(180deg, #3182ce 0%, #2c5aa0 100%);
-  border-radius: 6px 6px 0 0;
-  transition: height 0.6s ease-out;
-  min-height: 2px;
+  background: var(--mac-navy);
+  transition: height 0.4s ease-out;
+  min-height: 1px;
+}
+.bar-fill-current {
+  background: var(--mac-accent);
 }
 .bar-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--mac-slate-500);
-  margin-top: 6px;
+  margin-top: 8px;
+  letter-spacing: -0.01em;
 }
 
+/* Goal card */
 .goal-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
-.goal-gauge {
-  width: 100%;
-  max-width: 260px;
-  height: auto;
+
+.goal-progress-row {
+  margin-top: 24px;
+  margin-bottom: 20px;
 }
-.goal-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.goal-pct {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--mac-slate-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.goal-progress-track {
   width: 100%;
-  margin-top: 12px;
+  height: 6px;
+  background: var(--mac-slate-100);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.goal-progress-fill {
+  height: 100%;
+  background: var(--mac-navy);
+  border-radius: 3px;
+  transition: width 0.4s ease-out;
+}
+
+.goal-dl {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 4px 0 0;
   padding-top: 12px;
   border-top: 1px solid var(--mac-slate-100);
 }
-.goal-stat-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--mac-slate-400);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.goal-dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--mac-slate-100);
 }
-.goal-stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  font-family: 'Space Mono', monospace;
+.goal-dl > div:last-child { border-bottom: none; }
+.goal-dl dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mac-slate-500);
+  letter-spacing: -0.01em;
+}
+.goal-dl dd {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--mac-slate-800);
-  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  margin: 0;
 }

@@ -258,16 +258,26 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
         {/* Chart + Goal row */}
         <div className="chart-row">
           <div className="chart-card">
-            <div className="chart-title">Shipments by Month — {chartYear}</div>
+            <div className="chart-header">
+              <div>
+                <div className="chart-eyebrow">Shipments by Month</div>
+                <div className="chart-title-2">{chartYear}</div>
+              </div>
+              <div className="chart-total">
+                <div className="chart-total-label">Year total</div>
+                <div className="chart-total-value">{fmtCurrency(yearTotal)}</div>
+              </div>
+            </div>
             <div className="bar-chart">
               {monthlyTotals.map((v, i) => {
                 const max = Math.max(...monthlyTotals, 1);
-                const h = (v / max) * 100;
+                const h = max > 0 ? (v / max) * 100 : 0;
+                const isCurrent = i === new Date().getMonth() && chartYear === new Date().getFullYear();
                 return (
                   <div key={i} className="bar-col">
-                    <div className="bar-value">{v > 0 ? `$${(v / 1_000_000).toFixed(2)}M` : ''}</div>
+                    <div className="bar-value">{v > 0 ? `${(v / 1_000_000).toFixed(2)}M` : ''}</div>
                     <div className="bar-track">
-                      <div className="bar-fill" style={{ height: `${h}%` }} />
+                      <div className={`bar-fill ${isCurrent ? 'bar-fill-current' : ''}`} style={{ height: `${h}%` }} />
                     </div>
                     <div className="bar-label">{MONTH_NAMES[i]}</div>
                   </div>
@@ -277,18 +287,30 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
           </div>
 
           <div className="goal-card">
-            <div className="goal-title">{chartYear} Shipping Goal</div>
-            <GoalGauge pct={goalPct} value={yearTotal} goal={ANNUAL_GOAL} />
-            <div className="goal-stats">
-              <div>
-                <div className="goal-stat-label">Achieved</div>
-                <div className="goal-stat-value">{fmtCurrency(yearTotal)}</div>
-              </div>
-              <div>
-                <div className="goal-stat-label">Goal</div>
-                <div className="goal-stat-value">{fmtCurrency(ANNUAL_GOAL)}</div>
+            <div className="chart-eyebrow">Shipping Goal</div>
+            <div className="chart-title-2">{chartYear}</div>
+
+            <div className="goal-progress-row">
+              <div className="goal-pct">{goalPct.toFixed(1)}%</div>
+              <div className="goal-progress-track">
+                <div className="goal-progress-fill" style={{ width: `${goalPct}%` }} />
               </div>
             </div>
+
+            <dl className="goal-dl">
+              <div>
+                <dt>Achieved</dt>
+                <dd>{fmtCurrency(yearTotal)}</dd>
+              </div>
+              <div>
+                <dt>Goal</dt>
+                <dd>{fmtCurrency(ANNUAL_GOAL)}</dd>
+              </div>
+              <div>
+                <dt>Remaining</dt>
+                <dd>{fmtCurrency(Math.max(0, ANNUAL_GOAL - yearTotal))}</dd>
+              </div>
+            </dl>
           </div>
         </div>
 
@@ -394,30 +416,3 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
   );
 };
 
-function GoalGauge({ pct, value: _value, goal: _goal }: { pct: number; value: number; goal: number }) {
-  const radius = 80;
-  const circ = Math.PI * radius;
-  const dashOffset = circ - (pct / 100) * circ;
-
-  return (
-    <svg viewBox="0 0 200 110" className="goal-gauge">
-      {/* Background arc */}
-      <path
-        d={`M 20 100 A ${radius} ${radius} 0 0 1 180 100`}
-        stroke="#e2e8f0" strokeWidth="16" fill="none" strokeLinecap="round"
-      />
-      {/* Progress arc */}
-      <path
-        d={`M 20 100 A ${radius} ${radius} 0 0 1 180 100`}
-        stroke="#3182ce" strokeWidth="16" fill="none" strokeLinecap="round"
-        strokeDasharray={circ}
-        strokeDashoffset={dashOffset}
-        style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
-      />
-      {/* Pct text */}
-      <text x="100" y="92" textAnchor="middle" fontSize="22" fontWeight="700" fill="#1e293b" fontFamily="Space Mono, monospace">
-        {pct.toFixed(1)}%
-      </text>
-    </svg>
-  );
-}
