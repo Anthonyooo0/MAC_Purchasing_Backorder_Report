@@ -56,13 +56,13 @@ WITH OnHand AS (
 -- Future requirements: actual demand from open Job Orders (BOM components)
 JODemand AS (
   SELECT
-    RTRIM(jb.FPARTNO) AS FPARTNO,
-    SUM(jb.FQTY_ORD - COALESCE(jb.FQTY_ISS, 0)) AS JOReqQty
+    RTRIM(jb.FBOMPART) AS FPARTNO,
+    SUM(jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0)) AS JOReqQty
   FROM JODBOM jb
     INNER JOIN JOMAST jm ON RTRIM(jb.FJOBNO) = RTRIM(jm.FJOBNO)
   WHERE RTRIM(jm.FSTATUS) NOT IN ('Closed', 'Cancelled', 'Complete')
-    AND (jb.FQTY_ORD - COALESCE(jb.FQTY_ISS, 0)) > 0
-  GROUP BY RTRIM(jb.FPARTNO)
+    AND (jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0)) > 0
+  GROUP BY RTRIM(jb.FBOMPART)
 ),
 -- Future requirements: open SO releases (direct stock shipments)
 SODemand AS (
@@ -80,8 +80,8 @@ SODemand AS (
 UsageHist AS (
   SELECT
     RTRIM(FPARTNO) AS FPARTNO,
-    SUM(FISSUEQTY) AS IssQty90
-  FROM INTRANS
+    SUM(FQTY) AS IssQty90
+  FROM INTRAN
   WHERE FTYPE = 'I'
     AND FDATE >= DATEADD(day, -90, CAST(GETDATE() AS DATE))
   GROUP BY RTRIM(FPARTNO)
