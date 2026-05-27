@@ -133,6 +133,15 @@ function ReportIcon({ code }: { code: string }) {
       </svg>
     );
   }
+  if (code === 'IMPINV') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+        <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+        <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
+        <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
+      </svg>
+    );
+  }
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
       <path d="M9 17v-2a4 4 0 0 1 4-4h6M3 7h18M3 12h18M3 17h6" />

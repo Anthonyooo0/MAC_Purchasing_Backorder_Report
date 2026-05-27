@@ -5,6 +5,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { ImpulseShipments } from './components/ImpulseShipments';
 import { ImpulseBacklog } from './components/ImpulseBacklog';
+import { ImpulseInventory } from './components/ImpulseInventory';
 import { reportsForUser } from './reports';
 
 function App() {
@@ -85,6 +86,9 @@ function App() {
         )}
         {activeReportId === 'impulse-backlog' && (
           <ImpulseBacklog userEmail={currentUser} />
+        )}
+        {activeReportId === 'impulse-inventory' && (
+          <ImpulseInventory userEmail={currentUser} />
         )}
       </main>
     </div>

@@ -29,6 +29,14 @@ export const REPORTS: ReportDef[] = [
     reportCode: 'IMPBACK',
     allowedDomains: ['macproducts.net', 'macimpulse.net'],
   },
+  {
+    id: 'impulse-inventory',
+    name: 'Inventory & Days of Supply',
+    shortName: 'Inventory/DOS',
+    description: 'On-hand inventory with actual future requirements from JOs and SOs',
+    reportCode: 'IMPINV',
+    allowedDomains: ['macproducts.net', 'macimpulse.net'],
+  },
 ];
 
 export function reportsForUser(email: string | null): ReportDef[] {
