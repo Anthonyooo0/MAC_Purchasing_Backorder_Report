@@ -6,12 +6,14 @@ interface Props { userEmail: string; }
 
 interface InvRow {
   'Part Number': string; 'Rev': string; 'Description': string;
-  'Status': string; 'Source': string;
+  'Status': string; 'Source': string; 'Purchase': string;
   'Product Class Code': string; 'Product Class': string;
   'Buyer': string; 'Group Code': string; 'UOM': string;
-  'On Hand Qty': number; 'Reorder Qty': number; 'Safety Stock': number;
+  'On Hand Qty': number; 'Qty Expired': number; 'Qty Unexpired': number;
+  'Reorder Qty': number; 'Safety Stock': number;
   'Std Cost Unit': number; 'Std Cost Extended': number; 'Last Actual Cost': number;
-  'Locations': string;
+  'Locations': string; 'Bins': string; 'Lots': string;
+  'Date Last Issued': string; 'Date Last Received': string;
   'Usage History 90d': number; 'Future Requirements': number;
   'JO Demand': number; 'SO Demand': number;
   'Usage Annual': number; 'Days of Supply': number; 'Turns': number;
@@ -95,7 +97,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   function exportCSV() {
     if (sorted.length === 0) return;
-    const cols: (keyof InvRow)[] = ['Part Number','Rev','Description','Status','Source','Product Class Code','Product Class','Buyer','Group Code','UOM','On Hand Qty','Reorder Qty','Safety Stock','Std Cost Unit','Std Cost Extended','Last Actual Cost','Locations','Usage History 90d','Future Requirements','JO Demand','SO Demand','Usage Annual','Days of Supply','Turns','Lead Time Days'];
+    const cols: (keyof InvRow)[] = ['Part Number','Rev','Description','Status','Source','Purchase','Product Class Code','Product Class','Buyer','Group Code','UOM','Locations','Bins','Lots','Date Last Issued','Date Last Received','Qty Expired','Qty Unexpired','On Hand Qty','Reorder Qty','Safety Stock','Std Cost Unit','Std Cost Extended','Last Actual Cost','Usage History 90d','Future Requirements','JO Demand','SO Demand','Usage Annual','Days of Supply','Turns','Lead Time Days'];
     const esc = (v: any) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let csv = cols.join(',') + '\n';
     for (const row of sorted) csv += cols.map(c => esc(row[c])).join(',') + '\n';
@@ -196,12 +198,20 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                 <table>
                   <thead>
                     <tr>
-                      {['Part Number','Description','Status','Source','Product Class','Buyer','UOM',
-                        'On Hand Qty','Reorder Qty','Safety Stock','Std Cost Unit','Std Cost Ext',
-                        'Last Cost','Locations','Usage 90d','Future Req','JO Demand','SO Demand',
+                      {['Part Number','Description','Status','Source','Purchase','Product Class','Buyer','UOM',
+                        'Locations','Bins','Lots',
+                        'Date Issued','Date Received',
+                        'Expired','Unexpired','On Hand Qty',
+                        'Std Cost Unit','Std Cost Ext',
+                        'Last Cost','Reorder Qty','Safety Stock',
+                        'Usage 90d','Future Req','JO Demand','SO Demand',
                         'Annual','DOS','Turns','Lead Time'].map(col => {
                         const dataCol = col === 'Std Cost Ext' ? 'Std Cost Extended'
                           : col === 'Last Cost' ? 'Last Actual Cost'
+                          : col === 'Date Issued' ? 'Date Last Issued'
+                          : col === 'Date Received' ? 'Date Last Received'
+                          : col === 'Expired' ? 'Qty Expired'
+                          : col === 'Unexpired' ? 'Qty Unexpired'
                           : col === 'Usage 90d' ? 'Usage History 90d'
                           : col === 'Future Req' ? 'Future Requirements'
                           : col === 'Annual' ? 'Usage Annual'
@@ -219,27 +229,33 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                   </thead>
                   <tbody>
                     {sorted.length === 0 ? (
-                      <tr><td colSpan={22}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
+                      <tr><td colSpan={28}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
                     ) : (
                       sorted.map((r, i) => {
                         const belowSS = r['Safety Stock'] > 0 && r['On Hand Qty'] < r['Safety Stock'];
-                        const srcSlug = String(r['Source'] || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
                         return (
                           <tr key={i} className={belowSS ? 'overdue' : ''}>
                             <td className="id-col">{r['Part Number']}</td>
                             <td className="desc-col" title={r['Description']}>{r['Description']}</td>
-                            <td>{r['Status']}</td>
-                            <td>{r['Source'] && <span className={`badge badge-source badge-source-${srcSlug}`}>{r['Source']}</span>}</td>
+                            <td className="font-mono" style={{ fontSize: 12 }}>{r['Status']}</td>
+                            <td className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>{r['Source']}</td>
+                            <td className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>{r['Purchase']}</td>
                             <td title={r['Product Class']}>{r['Product Class Code']}{r['Product Class'] ? ` · ${r['Product Class']}` : ''}</td>
                             <td className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>{r['Buyer']}</td>
                             <td>{r['UOM']}</td>
+                            <td className="desc-col" title={r['Locations']}>{r['Locations']}</td>
+                            <td className="desc-col" title={r['Bins']}>{r['Bins']}</td>
+                            <td className="desc-col" title={r['Lots']}>{r['Lots']}</td>
+                            <td className="date-col">{r['Date Last Issued'] ? new Date(r['Date Last Issued']).toLocaleDateString('en-US') : ''}</td>
+                            <td className="date-col">{r['Date Last Received'] ? new Date(r['Date Last Received']).toLocaleDateString('en-US') : ''}</td>
+                            <td className="num">{fmtNum(r['Qty Expired'])}</td>
+                            <td className="num">{fmtNum(r['Qty Unexpired'])}</td>
                             <td className="num-bold">{fmtNum(r['On Hand Qty'])}</td>
-                            <td className="num">{fmtNum(r['Reorder Qty'])}</td>
-                            <td className="num">{fmtNum(r['Safety Stock'])}</td>
                             <td className="num">{fmtCurrency(r['Std Cost Unit'])}</td>
                             <td className="num">{fmtCurrency(r['Std Cost Extended'])}</td>
                             <td className="num">{fmtCurrency(r['Last Actual Cost'])}</td>
-                            <td className="desc-col" title={r['Locations']}>{r['Locations']}</td>
+                            <td className="num">{fmtNum(r['Reorder Qty'])}</td>
+                            <td className="num">{fmtNum(r['Safety Stock'])}</td>
                             <td className="num">{fmtNum(r['Usage History 90d'])}</td>
                             <td className="num-bold" style={{ color: r['Future Requirements'] > 0 ? '#c2410c' : undefined }}>{fmtNum(r['Future Requirements'])}</td>
                             <td className="num">{fmtNum(r['JO Demand'])}</td>

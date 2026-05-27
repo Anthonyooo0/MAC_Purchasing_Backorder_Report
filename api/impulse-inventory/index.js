@@ -44,13 +44,34 @@ WITH OnHand AS (
   SELECT
     RTRIM(FPARTNO) AS FPARTNO,
     SUM(FONHAND) AS TotalOnHand,
+    SUM(CASE WHEN FEXPDATE IS NOT NULL AND FEXPDATE <> '1900-01-01' AND FEXPDATE < CAST(GETDATE() AS DATE) THEN FONHAND ELSE 0 END) AS ExpiredQty,
+    SUM(CASE WHEN FEXPDATE IS NULL OR FEXPDATE = '1900-01-01' OR FEXPDATE >= CAST(GETDATE() AS DATE) THEN FONHAND ELSE 0 END) AS UnexpiredQty,
     STUFF((SELECT DISTINCT ', ' + RTRIM(FLOCATION)
            FROM INONHD i2
            WHERE RTRIM(i2.FPARTNO) = RTRIM(oh.FPARTNO)
              AND i2.FONHAND <> 0 AND RTRIM(i2.FLOCATION) <> ''
-           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, '') AS Locations
+           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, '') AS Locations,
+    STUFF((SELECT DISTINCT ', ' + RTRIM(FBINNO)
+           FROM INONHD i2
+           WHERE RTRIM(i2.FPARTNO) = RTRIM(oh.FPARTNO)
+             AND i2.FONHAND <> 0 AND RTRIM(i2.FBINNO) <> ''
+           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, '') AS Bins,
+    STUFF((SELECT DISTINCT ', ' + RTRIM(FLOT)
+           FROM INONHD i2
+           WHERE RTRIM(i2.FPARTNO) = RTRIM(oh.FPARTNO)
+             AND i2.FONHAND <> 0 AND RTRIM(i2.FLOT) <> ''
+           FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, '') AS Lots
   FROM INONHD oh
   WHERE FONHAND <> 0
+  GROUP BY RTRIM(FPARTNO)
+),
+-- Last issued / received dates from inventory transactions
+LastDates AS (
+  SELECT
+    RTRIM(FPARTNO) AS FPARTNO,
+    MAX(CASE WHEN FTYPE = 'I' THEN FDATE END) AS LastIssued,
+    MAX(CASE WHEN FTYPE = 'R' THEN FDATE END) AS LastReceived
+  FROM INTRAN
   GROUP BY RTRIM(FPARTNO)
 ),
 -- Future requirements: actual demand from open Job Orders (BOM components)
@@ -91,27 +112,26 @@ SELECT
   RTRIM(im.FREV)                          AS [Rev],
   RTRIM(im.FDESCRIPT)                     AS [Description],
   RTRIM(im.FCSTSCODE)                     AS [Status],
-  CASE
-    WHEN RTRIM(im.FSOURCE) = 'M' THEN 'MAKE'
-    WHEN RTRIM(im.FSOURCE) = 'B' THEN 'BUY'
-    WHEN RTRIM(im.FSOURCE) = 'S' AND UPPER(RTRIM(im.FCPURCHASE)) = 'Y' THEN 'STOCK (PURCHASE)'
-    WHEN RTRIM(im.FSOURCE) = 'S' AND UPPER(RTRIM(im.FCPURCHASE)) = 'N' THEN 'STOCK (MAKE)'
-    WHEN RTRIM(im.FSOURCE) = 'S' THEN 'STOCK'
-    WHEN RTRIM(im.FSOURCE) = 'P' THEN 'PHANTOM'
-    ELSE RTRIM(im.FSOURCE)
-  END                                     AS [Source],
+  RTRIM(im.FSOURCE)                       AS [Source],
+  UPPER(RTRIM(im.FCPURCHASE))             AS [Purchase],
   RTRIM(im.FPRODCL)                       AS [Product Class Code],
   RTRIM(pc.FPC_NAME)                      AS [Product Class],
   RTRIM(im.FBUYER)                        AS [Buyer],
   RTRIM(im.FGROUP)                        AS [Group Code],
   RTRIM(im.FMEASURE)                      AS [UOM],
   COALESCE(oh.TotalOnHand, 0)             AS [On Hand Qty],
+  COALESCE(oh.ExpiredQty, 0)             AS [Qty Expired],
+  COALESCE(oh.UnexpiredQty, 0)           AS [Qty Unexpired],
   im.FREORDQTY                            AS [Reorder Qty],
   im.FSAFETY                              AS [Safety Stock],
   im.FSTDCOST                             AS [Std Cost Unit],
   (COALESCE(oh.TotalOnHand, 0) * im.FSTDCOST) AS [Std Cost Extended],
   im.FLASTCOST                            AS [Last Actual Cost],
   COALESCE(oh.Locations, '')              AS [Locations],
+  COALESCE(oh.Bins, '')                   AS [Bins],
+  COALESCE(oh.Lots, '')                   AS [Lots],
+  ld.LastIssued                            AS [Date Last Issued],
+  ld.LastReceived                          AS [Date Last Received],
   COALESCE(uh.IssQty90, 0)               AS [Usage History 90d],
   COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) AS [Future Requirements],
   COALESCE(jd.JOReqQty, 0)               AS [JO Demand],
@@ -145,6 +165,7 @@ FROM INMASTX im
   LEFT JOIN OnHand  oh ON RTRIM(im.FPARTNO) = oh.FPARTNO
   LEFT JOIN JODemand jd ON RTRIM(im.FPARTNO) = jd.FPARTNO
   LEFT JOIN SODemand sd ON RTRIM(im.FPARTNO) = sd.FPARTNO
+  LEFT JOIN LastDates ld ON RTRIM(im.FPARTNO) = ld.FPARTNO
   LEFT JOIN UsageHist uh ON RTRIM(im.FPARTNO) = uh.FPARTNO
 WHERE COALESCE(oh.TotalOnHand, 0) <> 0
    OR COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) > 0
