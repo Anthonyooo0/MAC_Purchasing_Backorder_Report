@@ -31,9 +31,9 @@ export const REPORTS: ReportDef[] = [
   },
   {
     id: 'impulse-inventory',
-    name: 'Inventory & Days of Supply',
-    shortName: 'Inventory/DOS',
-    description: 'On-hand inventory with actual future requirements from JOs and SOs',
+    name: 'Inventory Report',
+    shortName: 'Inventory',
+    description: 'On-hand inventory with future requirements from JOs and SOs',
     reportCode: 'IMPINV',
     allowedDomains: ['macproducts.net', 'macimpulse.net'],
   },
