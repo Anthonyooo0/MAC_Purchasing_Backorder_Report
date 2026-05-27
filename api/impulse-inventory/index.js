@@ -17,7 +17,7 @@ function parseConnectionString(connString) {
     user: parts['user id'] || parts['uid'] || '',
     password: parts['password'] || parts['pwd'] || '',
     options: { encrypt: false, trustServerCertificate: true },
-    connectionTimeout: 15000,
+    connectionTimeout: 30000,
     requestTimeout: 120000,
   };
 }
