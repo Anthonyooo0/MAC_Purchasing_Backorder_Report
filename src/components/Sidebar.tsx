@@ -119,13 +119,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 function ReportIcon({ code }: { code: string }) {
   // Simple per-report icon based on report code
-  if (code === 'ZPOPH') {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-        <path d="M9 11H5v8h4v-8zM15 4h-4v15h4V4zM21 8h-4v11h4V8z" />
-      </svg>
-    );
-  }
   if (code === 'IMPSHIP') {
     return (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">

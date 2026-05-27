@@ -3,7 +3,6 @@ import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { ALLOWED_DOMAINS } from './authConfig';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
-import { BackorderReport } from './components/BackorderReport';
 import { ImpulseShipments } from './components/ImpulseShipments';
 import { ImpulseBacklog } from './components/ImpulseBacklog';
 import { reportsForUser } from './reports';
@@ -12,7 +11,7 @@ function App() {
   const { instance, accounts } = useMsal();
   const isAuthenticated = useIsAuthenticated();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [activeReportId, setActiveReportId] = useState<string>('backorder');
+  const [activeReportId, setActiveReportId] = useState<string>('impulse-shipments');
 
   useEffect(() => {
     if (isAuthenticated && accounts.length > 0) {
@@ -81,9 +80,6 @@ function App() {
         onSignOut={handleLogout}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
-        {activeReportId === 'backorder' && (
-          <BackorderReport userEmail={currentUser} onSignOut={handleLogout} />
-        )}
         {activeReportId === 'impulse-shipments' && (
           <ImpulseShipments userEmail={currentUser} />
         )}

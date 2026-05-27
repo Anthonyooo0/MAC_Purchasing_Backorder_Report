@@ -14,14 +14,6 @@ export interface ReportDef {
 
 export const REPORTS: ReportDef[] = [
   {
-    id: 'backorder',
-    name: 'Purchasing Backorder Report',
-    shortName: 'Backorder',
-    description: 'Open POs with outstanding backorder qty (ZPOPH replacement)',
-    reportCode: 'ZPOPH',
-    allowedDomains: ['macproducts.net'],
-  },
-  {
     id: 'impulse-shipments',
     name: 'Impulse Shipping Report',
     shortName: 'Impulse Ships',
