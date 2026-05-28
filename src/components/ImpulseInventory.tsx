@@ -16,6 +16,7 @@ interface DemandLine {
   QTYREQD: number;
   DATE: string | null;
   STATUS: string | null;
+  FSONO: string | null;
   FPONO: string | null;
 }
 
@@ -84,6 +85,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
       'Qty Reqd'?: number;
       'Demand Date'?: string | null;
       'Status'?: string | null;
+      'SO #'?: string | null;
       'PO #'?: string | null;
     };
     const out: Row[] = [];
@@ -99,6 +101,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
             'Qty Reqd':    l.QTYREQD,
             'Demand Date': l.DATE,
             'Status':      l.STATUS,
+            'SO #':        l.FSONO,
             'PO #':        l.FPONO,
           });
         }
@@ -145,7 +148,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   function exportCSV() {
     if (sorted.length === 0) return;
-    const cols: string[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','PO #'];
+    const cols: string[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','SO #','PO #'];
     const dateCols = new Set(['Issued', 'Received', 'Demand Date']);
     const esc = (v: any) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let csv = cols.join(',') + '\n';
@@ -240,7 +243,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                 <table>
                   <thead>
                     <tr>
-                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','PO #'].map(col => (
+                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','SO #','PO #'].map(col => (
                         <th key={col} onClick={() => toggleSort(col)}>
                           {col}<span className="sort-arrow">{sortCol === col ? (sortAsc ? ' ▲' : ' ▼') : ''}</span>
                         </th>
@@ -249,7 +252,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                   </thead>
                   <tbody>
                     {sorted.length === 0 ? (
-                      <tr><td colSpan={19}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
+                      <tr><td colSpan={20}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
                     ) : (
                       sorted.map((r, i) => (
                         <tr key={i}>
@@ -283,6 +286,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                               return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, background: bg, color: fg }}>{s}</span>;
                             })()}
                           </td>
+                          <td className="font-mono" style={{ fontSize: 12, color: '#7c3aed', fontWeight: 700 }}>{(r as any)['SO #'] || ''}</td>
                           <td className="font-mono" style={{ fontSize: 12, color: '#0f766e', fontWeight: 700 }}>{(r as any)['PO #'] || ''}</td>
                         </tr>
                       ))
@@ -353,6 +357,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                         <th style={{ textAlign: 'right', padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Qty Reqd</th>
                         <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Date</th>
                         <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Status</th>
+                        <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>SO #</th>
                         <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>PO #</th>
                       </tr>
                     </thead>
@@ -371,6 +376,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                               }}>{l.STATUS}</span>
                             )}
                           </td>
+                          <td style={{ padding: '10px 16px', fontFamily: 'Space Mono, monospace', color: '#7c3aed', fontWeight: 700 }}>{l.FSONO || ''}</td>
                           <td style={{ padding: '10px 16px', fontFamily: 'Space Mono, monospace', color: '#0f766e', fontWeight: 700 }}>{l.FPONO || ''}</td>
                         </tr>
                       ))}

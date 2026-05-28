@@ -100,15 +100,17 @@ ORDER BY RTRIM(im.FPARTNO), oh.Location;
 -- ===== Second result set: per-demand-line detail used by the part popup =====
 -- Mirrors M2M's RPMAVL view.  Unions open JO BOM lines + open SO releases +
 -- safety-stock requirements.  Grouped client-side by FPARTNO.
-SELECT FPARTNO, Demand, QtyReqd, NeedDate, Status, PONO
+SELECT FPARTNO, Demand, QtyReqd, NeedDate, Status, SONO, PONO
 FROM (
-    -- Job Order BOM demand lines
+    -- Job Order BOM demand lines.  SO comes from JOMAST when the job was
+    -- created for a sales order; PO is on the BOM line itself.
     SELECT
         RTRIM(jb.FBOMPART)                              AS FPARTNO,
         'JO Bom ' + RTRIM(jb.FJOBNO)                    AS Demand,
         (jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0))         AS QtyReqd,
         jb.FNEED_DT                                     AS NeedDate,
         RTRIM(jm.FSTATUS)                               AS Status,
+        RTRIM(jm.FSONO)                                 AS SONO,
         RTRIM(jb.FPONO)                                 AS PONO
     FROM JODBOM jb
         INNER JOIN JOMAST jm ON RTRIM(jb.FJOBNO) = RTRIM(jm.FJOBNO)
@@ -117,13 +119,15 @@ FROM (
 
     UNION ALL
 
-    -- Sales Order release demand lines
+    -- Sales Order release demand lines.  SO is the release's own SO number;
+    -- PO is the FPOSTATUS field (most-recent PO covering the release).
     SELECT
         RTRIM(sr.FPARTNO),
         'SO ' + RTRIM(sr.FSONO),
         (sr.FORDERQTY - COALESCE(sr.FNINVSHIP, 0) - COALESCE(sr.FINVQTY, 0)),
         sr.FDUEDATE,
         COALESCE(NULLIF(RTRIM(sr.FCRELSSTATUS), ''), RTRIM(sm.FSTATUS)),
+        RTRIM(sr.FSONO),
         RTRIM(sr.FPOSTATUS)
     FROM SORELS sr
         INNER JOIN SOMAST sm ON RTRIM(sr.FSONO) = RTRIM(sm.FSONO)
@@ -133,11 +137,13 @@ FROM (
 
     UNION ALL
 
-    -- Safety-stock demand: one synthetic line per part with FSAFETY > 0
+    -- Safety-stock demand: one synthetic line per part with FSAFETY > 0.
+    -- No SO or PO association.
     SELECT
         RTRIM(im2.FPARTNO),
         'Safety Stock',
         im2.FSAFETY,
+        NULL,
         NULL,
         NULL,
         NULL
@@ -192,6 +198,7 @@ module.exports = async function (context, req) {
           QTYREQD: d.QtyReqd,
           DATE:    d.NeedDate,
           STATUS:  d.Status,
+          FSONO:   d.SONO,
           FPONO:   d.PONO,
         });
       }
