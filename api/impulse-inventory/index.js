@@ -95,7 +95,56 @@ FROM INMASTX im
   LEFT JOIN SODemand sd ON RTRIM(im.FPARTNO) = sd.FPARTNO
 WHERE COALESCE(oh.TotalOnHand, 0) <> 0
    OR COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) > 0
-ORDER BY RTRIM(im.FPARTNO), oh.Location
+ORDER BY RTRIM(im.FPARTNO), oh.Location;
+
+-- ===== Second result set: per-demand-line detail used by the part popup =====
+-- Mirrors M2M's RPMAVL view.  Unions open JO BOM lines + open SO releases +
+-- safety-stock requirements.  Grouped client-side by FPARTNO.
+SELECT FPARTNO, Demand, QtyReqd, NeedDate, Status, PONO
+FROM (
+    -- Job Order BOM demand lines
+    SELECT
+        RTRIM(jb.FBOMPART)                              AS FPARTNO,
+        'JO Bom ' + RTRIM(jb.FJOBNO)                    AS Demand,
+        (jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0))         AS QtyReqd,
+        jb.FNEED_DT                                     AS NeedDate,
+        RTRIM(jm.FSTATUS)                               AS Status,
+        RTRIM(jb.FPONO)                                 AS PONO
+    FROM JODBOM jb
+        INNER JOIN JOMAST jm ON RTRIM(jb.FJOBNO) = RTRIM(jm.FJOBNO)
+    WHERE RTRIM(jm.FSTATUS) NOT IN ('Closed', 'Cancelled', 'Complete')
+      AND (jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0)) > 0
+
+    UNION ALL
+
+    -- Sales Order release demand lines
+    SELECT
+        RTRIM(sr.FPARTNO),
+        'SO ' + RTRIM(sr.FSONO),
+        (sr.FORDERQTY - COALESCE(sr.FNINVSHIP, 0) - COALESCE(sr.FINVQTY, 0)),
+        sr.FDUEDATE,
+        COALESCE(NULLIF(RTRIM(sr.FCRELSSTATUS), ''), RTRIM(sm.FSTATUS)),
+        RTRIM(sr.FPOSTATUS)
+    FROM SORELS sr
+        INNER JOIN SOMAST sm ON RTRIM(sr.FSONO) = RTRIM(sm.FSONO)
+    WHERE RTRIM(sm.FSTATUS) NOT IN ('Closed', 'Cancelled')
+      AND (RTRIM(sr.FCRELSSTATUS) IS NULL OR RTRIM(sr.FCRELSSTATUS) NOT IN ('Closed', 'Cancelled'))
+      AND (sr.FORDERQTY - COALESCE(sr.FNINVSHIP, 0) - COALESCE(sr.FINVQTY, 0)) > 0
+
+    UNION ALL
+
+    -- Safety-stock demand: one synthetic line per part with FSAFETY > 0
+    SELECT
+        RTRIM(im2.FPARTNO),
+        'Safety Stock',
+        im2.FSAFETY,
+        NULL,
+        NULL,
+        NULL
+    FROM INMASTX im2
+    WHERE im2.FSAFETY > 0
+) demand
+ORDER BY FPARTNO;
 `;
 
 const CORS = {
@@ -130,10 +179,27 @@ module.exports = async function (context, req) {
     try {
       const pool = await getPool();
       const result = await pool.request().query(INVENTORY_SQL);
+      const inventoryRows = result.recordsets[0] || [];
+      const demandRows    = result.recordsets[1] || [];
+      // Group demand lines by part number for the popup.
+      const demandLinesByPart = {};
+      for (const d of demandRows) {
+        const p = (d.FPARTNO || '').trim();
+        if (!p) continue;
+        if (!demandLinesByPart[p]) demandLinesByPart[p] = [];
+        demandLinesByPart[p].push({
+          DEMAND:  d.Demand,
+          QTYREQD: d.QtyReqd,
+          DATE:    d.NeedDate,
+          STATUS:  d.Status,
+          FPONO:   d.PONO,
+        });
+      }
       const body = JSON.stringify({
         generatedAt: new Date().toISOString(),
-        rowCount: result.recordset.length,
-        rows: result.recordset,
+        rowCount: inventoryRows.length,
+        rows: inventoryRows,
+        demandLinesByPart,
       });
       cachedBody = body;
       cachedAt = Date.now();

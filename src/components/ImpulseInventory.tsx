@@ -11,11 +11,21 @@ interface InvRow {
   'STD Unit': number; 'STD Extended': number; 'Future': number;
 }
 
+interface DemandLine {
+  DEMAND: string;
+  QTYREQD: number;
+  DATE: string | null;
+  STATUS: string | null;
+  FPONO: string | null;
+}
+
 const API_URL = (import.meta as any).env.VITE_IMPULSE_INVENTORY_API_URL
   || 'https://mac-backorder-hdavg3a7g9gpejdx.eastus-01.azurewebsites.net/api/impulse-inventory';
 
 export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => {
   const [allRows, setAllRows] = useState<InvRow[]>([]);
+  const [demandLinesByPart, setDemandLinesByPart] = useState<Record<string, DemandLine[]>>({});
+  const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +43,9 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
       const res = await fetch(API_URL);
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(`HTTP ${res.status}: ${err.error || 'Unknown error'}`); }
       const data = await res.json();
-      setAllRows(data.rows || []); setGeneratedAt(data.generatedAt);
+      setAllRows(data.rows || []);
+      setDemandLinesByPart(data.demandLinesByPart || {});
+      setGeneratedAt(data.generatedAt);
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -201,7 +213,12 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                     ) : (
                       sorted.map((r, i) => (
                         <tr key={i}>
-                          <td className="id-col">{r['Part Number']}</td>
+                          <td
+                            className="id-col"
+                            style={{ color: '#2c5aa0', cursor: 'pointer', textDecoration: 'underline' }}
+                            title="Click for demand breakdown"
+                            onClick={() => setSelectedPart(r['Part Number'])}
+                          >{r['Part Number']}</td>
                           <td className="font-mono" style={{ fontSize: 12 }}>{r['Rev']}</td>
                           <td className="desc-col" title={r['Description']}>{r['Description']}</td>
                           <td className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>{r['Source']}</td>
@@ -227,6 +244,105 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
         <div className="footer">MAC Products Internal System · MAC Impulse Database</div>
       </div>
+
+      {selectedPart && (() => {
+        const lines = demandLinesByPart[selectedPart] || [];
+        const partRow = allRows.find(r => r['Part Number'] === selectedPart);
+        const desc = partRow?.Description || '';
+        const totalDemand = lines.reduce((s, l) => s + (l.QTYREQD || 0), 0);
+        return (
+          <div
+            onClick={() => setSelectedPart(null)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(2px)', zIndex: 50,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff', borderRadius: 12, width: '100%', maxWidth: 960,
+                maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              }}
+            >
+              <div style={{
+                background: '#1a365d', color: '#fff', padding: '16px 24px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+              }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Space Mono, monospace' }}>{selectedPart}</div>
+                  <div style={{ color: '#b3d4ff', fontSize: 13, marginTop: 2 }}>{desc}</div>
+                  <div style={{ color: '#b3d4ff', fontSize: 11, marginTop: 6, fontWeight: 700, letterSpacing: 0.5 }}>
+                    DEMAND BREAKDOWN · {lines.length} {lines.length === 1 ? 'LINE' : 'LINES'} · TOTAL QTY {fmtNum(totalDemand)}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPart(null)}
+                  style={{
+                    background: 'transparent', color: '#fff', border: 'none',
+                    fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: '0 4px',
+                  }}
+                  title="Close"
+                >×</button>
+              </div>
+
+              <div style={{ overflow: 'auto', flex: 1 }}>
+                {lines.length === 0 ? (
+                  <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
+                    No open demand lines for this part.
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Demand</th>
+                        <th style={{ textAlign: 'right', padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Qty Reqd</th>
+                        <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Date</th>
+                        <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>Status</th>
+                        <th style={{ textAlign: 'left',  padding: '10px 16px', fontWeight: 700, color: '#475569' }}>PO #</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((l, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '10px 16px', fontFamily: 'Space Mono, monospace', fontSize: 12, fontWeight: 700 }}>{l.DEMAND}</td>
+                          <td style={{ padding: '10px 16px', textAlign: 'right', fontFamily: 'Space Mono, monospace', fontWeight: 700 }}>{fmtNum(l.QTYREQD)}</td>
+                          <td style={{ padding: '10px 16px', color: '#475569' }}>{fmtDate(l.DATE || '')}</td>
+                          <td style={{ padding: '10px 16px' }}>
+                            {l.STATUS && (
+                              <span style={{
+                                padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+                                background: l.STATUS === 'RELEASED' ? '#dbeafe' : l.STATUS === 'OPEN' ? '#fef3c7' : '#f1f5f9',
+                                color:      l.STATUS === 'RELEASED' ? '#1e40af' : l.STATUS === 'OPEN' ? '#92400e' : '#475569',
+                              }}>{l.STATUS}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 16px', fontFamily: 'Space Mono, monospace', color: '#0f766e', fontWeight: 700 }}>{l.FPONO || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div style={{
+                padding: '12px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc',
+                display: 'flex', justifyContent: 'flex-end',
+              }}>
+                <button
+                  onClick={() => setSelectedPart(null)}
+                  style={{
+                    padding: '8px 16px', background: '#1a365d', color: '#fff', border: 'none',
+                    borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  }}
+                >Close</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 };
