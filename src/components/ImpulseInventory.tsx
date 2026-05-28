@@ -69,20 +69,54 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
     });
   }, [allRows, search, filterSource, filterPurchase, filterLocation]);
 
+  // Explode each (part, location) row by its demand lines so each demand
+  // source — Job Order BOM, Sales Order release, Safety Stock — shows up as
+  // its own line, like M2M's RPMAVL report.  Cross-product with locations,
+  // so a part stocked in 2 locations with 3 demand lines becomes 6 rows.
+  // Parts with no demand lines still show one row with blank demand cols.
+  const displayRows = useMemo(() => {
+    type Row = InvRow & {
+      'DEMAND'?: string;
+      'Qty Reqd'?: number;
+      'Demand Date'?: string | null;
+      'Status'?: string | null;
+      'PO #'?: string | null;
+    };
+    const out: Row[] = [];
+    for (const r of filtered) {
+      const lines = demandLinesByPart[r['Part Number']] || [];
+      if (lines.length === 0) {
+        out.push({ ...r });
+      } else {
+        for (const l of lines) {
+          out.push({
+            ...r,
+            'DEMAND':      l.DEMAND,
+            'Qty Reqd':    l.QTYREQD,
+            'Demand Date': l.DATE,
+            'Status':      l.STATUS,
+            'PO #':        l.FPONO,
+          });
+        }
+      }
+    }
+    return out;
+  }, [filtered, demandLinesByPart]);
+
   const sorted = useMemo(() => {
-    const out = [...filtered];
+    const out = [...displayRows];
     out.sort((a, b) => {
       let va: any = (a as any)[sortCol], vb: any = (b as any)[sortCol];
       if (va == null) va = ''; if (vb == null) vb = '';
       if (typeof va === 'number' && typeof vb === 'number') return sortAsc ? va - vb : vb - va;
-      if (sortCol === 'Issued' || sortCol === 'Received') {
+      if (sortCol === 'Issued' || sortCol === 'Received' || sortCol === 'Demand Date') {
         const da = new Date(va || 0).getTime(), db = new Date(vb || 0).getTime();
         return sortAsc ? da - db : db - da;
       }
       return sortAsc ? String(va).toLowerCase().localeCompare(String(vb).toLowerCase()) : String(vb).toLowerCase().localeCompare(String(va).toLowerCase());
     });
     return out;
-  }, [filtered, sortCol, sortAsc]);
+  }, [displayRows, sortCol, sortAsc]);
 
   const totalValue = useMemo(() => filtered.reduce((s, r) => s + (r['STD Extended'] || 0), 0), [filtered]);
   const totalOnHand = useMemo(() => filtered.reduce((s, r) => s + (r['Total'] || 0), 0), [filtered]);
@@ -106,10 +140,11 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   function exportCSV() {
     if (sorted.length === 0) return;
-    const cols: (keyof InvRow)[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future'];
+    const cols: string[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','PO #'];
+    const dateCols = new Set(['Issued', 'Received', 'Demand Date']);
     const esc = (v: any) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let csv = cols.join(',') + '\n';
-    for (const row of sorted) csv += cols.map(c => esc(c === 'Issued' || c === 'Received' ? fmtDate(row[c] as string) : row[c])).join(',') + '\n';
+    for (const row of sorted) csv += cols.map(c => esc(dateCols.has(c) ? fmtDate((row as any)[c] as string) : (row as any)[c])).join(',') + '\n';
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob); const a = document.createElement('a');
     a.href = url; a.download = `MAC_Impulse_Inventory_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url);
@@ -200,7 +235,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                 <table>
                   <thead>
                     <tr>
-                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future'].map(col => (
+                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future','DEMAND','Qty Reqd','Demand Date','Status','PO #'].map(col => (
                         <th key={col} onClick={() => toggleSort(col)}>
                           {col}<span className="sort-arrow">{sortCol === col ? (sortAsc ? ' ▲' : ' ▼') : ''}</span>
                         </th>
@@ -209,7 +244,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                   </thead>
                   <tbody>
                     {sorted.length === 0 ? (
-                      <tr><td colSpan={14}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
+                      <tr><td colSpan={19}><div className="empty-state"><p>No inventory items match your filters</p></div></td></tr>
                     ) : (
                       sorted.map((r, i) => (
                         <tr key={i}>
@@ -232,6 +267,18 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                           <td className="num">{fmtCurrency(r['STD Unit'])}</td>
                           <td className="num">{fmtCurrency(r['STD Extended'])}</td>
                           <td className="num-bold" style={{ color: r['Future'] > 0 ? '#c2410c' : undefined }}>{fmtNum(r['Future'])}</td>
+                          <td className="font-mono" style={{ fontSize: 12, fontWeight: 700 }}>{(r as any)['DEMAND'] || ''}</td>
+                          <td className="num">{(r as any)['Qty Reqd'] != null ? fmtNum((r as any)['Qty Reqd']) : ''}</td>
+                          <td className="date-col">{fmtDate((r as any)['Demand Date'] || '')}</td>
+                          <td>
+                            {(r as any)['Status'] && (() => {
+                              const s = String((r as any)['Status']).toUpperCase();
+                              const bg = s === 'RELEASED' ? '#dbeafe' : s === 'OPEN' ? '#fef3c7' : s === 'STARTED' ? '#dcfce7' : s === 'ON HOLD' ? '#fee2e2' : '#f1f5f9';
+                              const fg = s === 'RELEASED' ? '#1e40af' : s === 'OPEN' ? '#92400e' : s === 'STARTED' ? '#166534' : s === 'ON HOLD' ? '#991b1b' : '#475569';
+                              return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, background: bg, color: fg }}>{s}</span>;
+                            })()}
+                          </td>
+                          <td className="font-mono" style={{ fontSize: 12, color: '#0f766e', fontWeight: 700 }}>{(r as any)['PO #'] || ''}</td>
                         </tr>
                       ))
                     )}
