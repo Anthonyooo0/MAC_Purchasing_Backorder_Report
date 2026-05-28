@@ -124,14 +124,15 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   const totalValue = useMemo(() => filtered.reduce((s, r) => s + (r['STD Extended'] || 0), 0), [filtered]);
   const totalOnHand = useMemo(() => filtered.reduce((s, r) => s + (r['Total'] || 0), 0), [filtered]);
-  // Future is part-level (same value across every location row for a part),
-  // so sum it once per unique part number to avoid multi-location inflation.
+  // Future is part-level (same qty across every location row for a part), so
+  // dedupe by part number before summing.  Value = future qty * STD Unit cost
+  // to match the same valuation method as Total Inventory Value.
   const totalFuture = useMemo(() => {
     const seen = new Set<string>();
     let sum = 0;
     for (const r of filtered) {
       const p = r['Part Number'];
-      if (!seen.has(p)) { seen.add(p); sum += r['Future'] || 0; }
+      if (!seen.has(p)) { seen.add(p); sum += (r['Future'] || 0) * (r['STD Unit'] || 0); }
     }
     return sum;
   }, [filtered]);
@@ -194,8 +195,8 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
             <div className="card-value">{totalOnHand.toLocaleString()}</div>
           </div>
           <div className="card card-orange">
-            <div className="card-label">Future Requirements</div>
-            <div className="card-value">{totalFuture.toLocaleString()}</div>
+            <div className="card-label">Future Requirements ($)</div>
+            <div className="card-value">{fmtCurrency(totalFuture)}</div>
           </div>
           <div className="card card-green">
             <div className="card-label">Unique Parts</div>
