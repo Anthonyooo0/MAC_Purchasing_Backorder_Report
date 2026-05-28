@@ -76,7 +76,7 @@ SODemand AS (
 SELECT
   RTRIM(im.FPARTNO)                       AS [Part Number],
   RTRIM(im.FREV)                          AS [Rev],
-  RTRIM(im.FDESCRIPT)                     AS [Description],
+  COALESCE(NULLIF(RTRIM(CAST(im.FMUSRMEMO1 AS NVARCHAR(MAX))), ''), RTRIM(im.FDESCRIPT)) AS [Description],
   RTRIM(im.FSOURCE)                       AS [Source],
   UPPER(RTRIM(im.FCPURCHASE))             AS [Purchase],
   COALESCE(oh.Location, '')               AS [Location],
