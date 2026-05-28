@@ -17,7 +17,7 @@ function parseConnectionString(connString) {
     user: parts['user id'] || parts['uid'] || '',
     password: parts['password'] || parts['pwd'] || '',
     options: { encrypt: false, trustServerCertificate: true },
-    connectionTimeout: 30000,
+    connectionTimeout: 60000,
     requestTimeout: 120000,
   };
 }
@@ -104,25 +104,40 @@ const CORS = {
 };
 
 module.exports = async function (context, req) {
-  try {
-    const pool = await getPool();
-    const result = await pool.request().query(INVENTORY_SQL);
-
-    context.res = {
-      status: 200,
-      headers: CORS,
-      body: JSON.stringify({
-        generatedAt: new Date().toISOString(),
-        rowCount: result.recordset.length,
-        rows: result.recordset,
-      }),
-    };
-  } catch (err) {
-    context.log.error('Impulse inventory query error:', err.message);
-    context.res = {
-      status: 500,
-      headers: CORS,
-      body: JSON.stringify({ error: err.message }),
-    };
+  // Retry once on connection-style failures so the first user after the
+  // hybrid connection goes idle doesn't get a hard error during cold-start.
+  let lastErr;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const pool = await getPool();
+      const result = await pool.request().query(INVENTORY_SQL);
+      context.res = {
+        status: 200,
+        headers: CORS,
+        body: JSON.stringify({
+          generatedAt: new Date().toISOString(),
+          rowCount: result.recordset.length,
+          rows: result.recordset,
+        }),
+      };
+      return;
+    } catch (err) {
+      lastErr = err;
+      const msg = err.message || '';
+      const isConnErr = /failed to connect|timeout|ESOCKET|ETIMEOUT|ECONNCLOSED|ConnectionError/i.test(msg);
+      if (attempt < 2 && isConnErr) {
+        context.log.warn(`Impulse inventory attempt ${attempt} hit cold-start, retrying:`, msg);
+        poolPromise = null;
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        context.log.error('Impulse inventory query error:', msg);
+        break;
+      }
+    }
   }
+  context.res = {
+    status: 500,
+    headers: CORS,
+    body: JSON.stringify({ error: lastErr.message }),
+  };
 };
