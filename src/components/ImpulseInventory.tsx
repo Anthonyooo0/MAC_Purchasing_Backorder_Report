@@ -74,7 +74,18 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   const totalValue = useMemo(() => filtered.reduce((s, r) => s + (r['STD Extended'] || 0), 0), [filtered]);
   const totalOnHand = useMemo(() => filtered.reduce((s, r) => s + (r['Total'] || 0), 0), [filtered]);
-  const totalFuture = useMemo(() => filtered.reduce((s, r) => s + (r['Future'] || 0), 0), [filtered]);
+  // Future is part-level (same value across every location row for a part),
+  // so sum it once per unique part number to avoid multi-location inflation.
+  const totalFuture = useMemo(() => {
+    const seen = new Set<string>();
+    let sum = 0;
+    for (const r of filtered) {
+      const p = r['Part Number'];
+      if (!seen.has(p)) { seen.add(p); sum += r['Future'] || 0; }
+    }
+    return sum;
+  }, [filtered]);
+  const uniqueParts = useMemo(() => new Set(filtered.map(r => r['Part Number'])).size, [filtered]);
 
   function toggleSort(col: string) { if (sortCol === col) setSortAsc(!sortAsc); else { setSortCol(col); setSortAsc(true); } }
   function fmtCurrency(n: number | null | undefined) { if (n == null) return ''; return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }); }
@@ -136,8 +147,8 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
             <div className="card-value">{totalFuture.toLocaleString()}</div>
           </div>
           <div className="card card-green">
-            <div className="card-label">Lines</div>
-            <div className="card-value">{filtered.length.toLocaleString()}</div>
+            <div className="card-label">Unique Parts</div>
+            <div className="card-value">{uniqueParts.toLocaleString()}</div>
           </div>
         </div>
 
