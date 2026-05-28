@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import './backorder-report.css';
 
 interface Props { userEmail: string; }
@@ -31,6 +31,10 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
+  // Deferred copy of `search` — React lets the input update at full priority
+  // and runs the heavy filter/explode/sort pipeline at a lower priority once
+  // typing settles, so keystrokes stay snappy on big result sets.
+  const deferredSearch = useDeferredValue(search);
   const [filterSource, setFilterSource] = useState('');
   const [filterPurchase, setFilterPurchase] = useState('');
   const [filterLocation, setFilterLocation] = useState('');
@@ -56,7 +60,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
   const locations = useMemo(() => [...new Set(allRows.map(r => r['Location']).filter(Boolean))].sort(), [allRows]);
 
   const filtered = useMemo(() => {
-    const s = search.toLowerCase();
+    const s = deferredSearch.toLowerCase();
     return allRows.filter(r => {
       if (filterSource && r['Source'] !== filterSource) return false;
       if (filterPurchase && r['Purchase'] !== filterPurchase) return false;
@@ -67,7 +71,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
       }
       return true;
     });
-  }, [allRows, search, filterSource, filterPurchase, filterLocation]);
+  }, [allRows, deferredSearch, filterSource, filterPurchase, filterLocation]);
 
   // Explode each (part, location) row by its demand lines so each demand
   // source — Job Order BOM, Sales Order release, Safety Stock — shows up as
