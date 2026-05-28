@@ -103,7 +103,26 @@ const CORS = {
   'Access-Control-Allow-Origin': '*',
 };
 
+// In-memory response cache.  Survives between requests on the same worker;
+// lost when the worker restarts.  10-minute TTL keeps inventory close to
+// real-time while making most requests instant and shielding users from
+// transient SQL failures.
+const CACHE_TTL_MS = 10 * 60 * 1000;
+let cachedBody = null;
+let cachedAt = 0;
+
 module.exports = async function (context, req) {
+  // Serve from cache if fresh.
+  if (cachedBody && (Date.now() - cachedAt) < CACHE_TTL_MS) {
+    const ageSec = Math.round((Date.now() - cachedAt) / 1000);
+    context.res = {
+      status: 200,
+      headers: { ...CORS, 'X-Cache': 'HIT', 'X-Cache-Age-Seconds': String(ageSec) },
+      body: cachedBody,
+    };
+    return;
+  }
+
   // Retry once on connection-style failures so the first user after the
   // hybrid connection goes idle doesn't get a hard error during cold-start.
   let lastErr;
@@ -111,14 +130,17 @@ module.exports = async function (context, req) {
     try {
       const pool = await getPool();
       const result = await pool.request().query(INVENTORY_SQL);
+      const body = JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        rowCount: result.recordset.length,
+        rows: result.recordset,
+      });
+      cachedBody = body;
+      cachedAt = Date.now();
       context.res = {
         status: 200,
-        headers: CORS,
-        body: JSON.stringify({
-          generatedAt: new Date().toISOString(),
-          rowCount: result.recordset.length,
-          rows: result.recordset,
-        }),
+        headers: { ...CORS, 'X-Cache': 'MISS' },
+        body,
       };
       return;
     } catch (err) {
@@ -135,6 +157,19 @@ module.exports = async function (context, req) {
       }
     }
   }
+
+  // SQL failed and cache is empty/stale — last-resort: serve stale cache if
+  // we have any, so the user gets data instead of a 500.
+  if (cachedBody) {
+    context.log.warn('Serving stale cache as fallback after SQL failure');
+    context.res = {
+      status: 200,
+      headers: { ...CORS, 'X-Cache': 'STALE' },
+      body: cachedBody,
+    };
+    return;
+  }
+
   context.res = {
     status: 500,
     headers: CORS,

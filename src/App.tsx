@@ -23,6 +23,16 @@ function App() {
     }
   }, [isAuthenticated, accounts]);
 
+  // Pre-warm the inventory endpoint after login so the first Inventory click
+  // returns instantly from the server cache (and so the on-prem hybrid
+  // connection is already awake by the time someone needs data).
+  useEffect(() => {
+    if (!currentUser) return;
+    const url = (import.meta as any).env.VITE_IMPULSE_INVENTORY_API_URL
+      || 'https://mac-backorder-hdavg3a7g9gpejdx.eastus-01.azurewebsites.net/api/impulse-inventory';
+    fetch(url, { keepalive: true }).catch(() => {});
+  }, [currentUser]);
+
   const availableReports = useMemo(() => reportsForUser(currentUser), [currentUser]);
 
   // If the user's first available report isn't 'backorder', default to whichever they have
