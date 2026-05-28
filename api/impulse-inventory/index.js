@@ -97,13 +97,28 @@ WHERE COALESCE(oh.TotalOnHand, 0) <> 0
    OR COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) > 0
 ORDER BY RTRIM(im.FPARTNO), oh.Location;
 
--- ===== Second result set: per-demand-line detail used by the part popup =====
+-- ===== Second result set: per-demand-line detail =====
 -- Mirrors M2M's RPMAVL view.  Unions open JO BOM lines + open SO releases +
 -- safety-stock requirements.  Grouped client-side by FPARTNO.
+--
+-- For SO release demand lines, the PO column is looked up from POITEM (the
+-- real source of PO data) — any open PO line buying this same part on the
+-- same SO.  SORELS.FPOSTATUS is rarely populated so we ignore it.  Multiple
+-- matching POs are comma-separated.
+WITH OpenPOForSOPart AS (
+    SELECT
+        RTRIM(pi.FSOKEY)  AS FSONO,
+        RTRIM(pi.FPARTNO) AS FPARTNO,
+        STRING_AGG(RTRIM(pi.FPONO), ', ') WITHIN GROUP (ORDER BY pi.FPONO) AS PONumbers
+    FROM POITEM pi WITH (NOLOCK)
+    WHERE (ISNULL(pi.FORDQTY, 0) - ISNULL(pi.FRCPQTY, 0)) > 0
+      AND RTRIM(ISNULL(pi.FSOKEY, '')) <> ''
+    GROUP BY RTRIM(pi.FSOKEY), RTRIM(pi.FPARTNO)
+)
 SELECT FPARTNO, Demand, QtyReqd, NeedDate, Status, SONO, PONO
 FROM (
     -- Job Order BOM demand lines.  SO comes from JOMAST when the job was
-    -- created for a sales order; PO is on the BOM line itself.
+    -- created for a sales order; PO stays on the BOM line itself (FPONO).
     SELECT
         RTRIM(jb.FBOMPART)                              AS FPARTNO,
         'JO Bom ' + RTRIM(jb.FJOBNO)                    AS Demand,
@@ -119,8 +134,8 @@ FROM (
 
     UNION ALL
 
-    -- Sales Order release demand lines.  SO is the release's own SO number;
-    -- PO is the FPOSTATUS field (most-recent PO covering the release).
+    -- Sales Order release demand lines.  PO comes from POITEM lookup by
+    -- (SO, part), not from SORELS.FPOSTATUS.
     SELECT
         RTRIM(sr.FPARTNO),
         'SO ' + RTRIM(sr.FSONO),
@@ -128,9 +143,12 @@ FROM (
         sr.FDUEDATE,
         COALESCE(NULLIF(RTRIM(sr.FCRELSSTATUS), ''), RTRIM(sm.FSTATUS)),
         RTRIM(sr.FSONO),
-        RTRIM(sr.FPOSTATUS)
+        op.PONumbers
     FROM SORELS sr
         INNER JOIN SOMAST sm ON RTRIM(sr.FSONO) = RTRIM(sm.FSONO)
+        LEFT  JOIN OpenPOForSOPart op
+            ON op.FSONO   = RTRIM(sr.FSONO)
+           AND op.FPARTNO = RTRIM(sr.FPARTNO)
     WHERE RTRIM(sm.FSTATUS) NOT IN ('Closed', 'Cancelled')
       AND (RTRIM(sr.FCRELSSTATUS) IS NULL OR RTRIM(sr.FCRELSSTATUS) NOT IN ('Closed', 'Cancelled'))
       AND (sr.FORDERQTY - COALESCE(sr.FNINVSHIP, 0) - COALESCE(sr.FINVQTY, 0)) > 0
@@ -138,7 +156,7 @@ FROM (
     UNION ALL
 
     -- Safety-stock demand: one synthetic line per part with FSAFETY > 0.
-    -- No SO or PO association.
+    -- No SO, so no PO association.
     SELECT
         RTRIM(im2.FPARTNO),
         'Safety Stock',
