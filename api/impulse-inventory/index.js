@@ -117,8 +117,11 @@ WITH OpenPOForSOPart AS (
 )
 SELECT FPARTNO, Demand, QtyReqd, NeedDate, Status, SONO, PONO
 FROM (
-    -- Job Order BOM demand lines.  SO comes from JOMAST when the job was
-    -- created for a sales order; PO stays on the BOM line itself (FPONO).
+    -- Job Order BOM demand lines.  When the JO was created for a sales
+    -- order (JOMAST.FSONO set), look up open POs via POITEM the same way
+    -- SO lines do — many JOs have an SO + PO buying material for them.
+    -- Fall back to JODBOM.FPONO for the rare case where it's set but the
+    -- POITEM lookup misses.
     SELECT
         RTRIM(jb.FBOMPART)                              AS FPARTNO,
         'JO Bom ' + RTRIM(jb.FJOBNO)                    AS Demand,
@@ -126,9 +129,12 @@ FROM (
         jb.FNEED_DT                                     AS NeedDate,
         RTRIM(jm.FSTATUS)                               AS Status,
         RTRIM(jm.FSONO)                                 AS SONO,
-        RTRIM(jb.FPONO)                                 AS PONO
+        COALESCE(op.PONumbers, NULLIF(RTRIM(jb.FPONO), '')) AS PONO
     FROM JODBOM jb
         INNER JOIN JOMAST jm ON RTRIM(jb.FJOBNO) = RTRIM(jm.FJOBNO)
+        LEFT  JOIN OpenPOForSOPart op
+            ON op.FSONO   = RTRIM(jm.FSONO)
+           AND op.FPARTNO = RTRIM(jb.FBOMPART)
     WHERE RTRIM(jm.FSTATUS) NOT IN ('Closed', 'Cancelled', 'Complete')
       AND (jb.FTOTQTY - COALESCE(jb.FQTY_ISS, 0)) > 0
 
