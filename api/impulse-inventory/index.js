@@ -72,6 +72,19 @@ SODemand AS (
     AND (RTRIM(sr.FCRELSSTATUS) IS NULL OR RTRIM(sr.FCRELSSTATUS) NOT IN ('Closed', 'Cancelled'))
     AND (sr.FORDERQTY - COALESCE(sr.FNINVSHIP, 0) - COALESCE(sr.FINVQTY, 0)) > 0
   GROUP BY RTRIM(sr.FPARTNO)
+),
+-- Qty of stock RESERVED/committed to open jobs (M2M's "FBOOK = QTY COMMIT"
+-- minus what's already been issued).  Different from JODemand: this is
+-- inventory already earmarked, not net demand that might be purchased.
+JOAlloc AS (
+  SELECT
+    RTRIM(jb.FBOMPART) AS FPARTNO,
+    SUM(jb.FBOOK - COALESCE(jb.FQTY_ISS, 0)) AS AllocatedQty
+  FROM JODBOM jb
+    INNER JOIN JOMAST jm ON RTRIM(jb.FJOBNO) = RTRIM(jm.FJOBNO)
+  WHERE RTRIM(jm.FSTATUS) NOT IN ('Closed', 'Cancelled', 'Complete')
+    AND (jb.FBOOK - COALESCE(jb.FQTY_ISS, 0)) > 0
+  GROUP BY RTRIM(jb.FBOMPART)
 )
 SELECT
   RTRIM(im.FPARTNO)                       AS [Part Number],
@@ -87,14 +100,17 @@ SELECT
   COALESCE(oh.TotalOnHand, 0)             AS [Total],
   im.FSTDCOST                             AS [STD Unit],
   (COALESCE(oh.TotalOnHand, 0) * im.FSTDCOST) AS [STD Extended],
-  COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) AS [Future]
+  COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) AS [Future],
+  COALESCE(ja.AllocatedQty, 0)                       AS [Allocated]
 FROM INMASTX im
   LEFT JOIN OnHand oh ON RTRIM(im.FPARTNO) = oh.FPARTNO
   LEFT JOIN LastDates ld ON RTRIM(im.FPARTNO) = ld.FPARTNO
   LEFT JOIN JODemand jd ON RTRIM(im.FPARTNO) = jd.FPARTNO
   LEFT JOIN SODemand sd ON RTRIM(im.FPARTNO) = sd.FPARTNO
+  LEFT JOIN JOAlloc ja ON RTRIM(im.FPARTNO) = ja.FPARTNO
 WHERE COALESCE(oh.TotalOnHand, 0) <> 0
    OR COALESCE(jd.JOReqQty, 0) + COALESCE(sd.SOReqQty, 0) > 0
+   OR COALESCE(ja.AllocatedQty, 0) > 0
 ORDER BY RTRIM(im.FPARTNO), oh.Location
 `;
 

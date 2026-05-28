@@ -9,6 +9,7 @@ interface InvRow {
   'UOM': string; 'Issued': string; 'Received': string;
   'Unexpired': number; 'Total': number;
   'STD Unit': number; 'STD Extended': number; 'Future': number;
+  'Allocated': number;
 }
 
 const API_URL = (import.meta as any).env.VITE_IMPULSE_INVENTORY_API_URL
@@ -94,7 +95,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
 
   function exportCSV() {
     if (sorted.length === 0) return;
-    const cols: (keyof InvRow)[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future'];
+    const cols: (keyof InvRow)[] = ['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','Allocated','STD Unit','STD Extended','Future'];
     const esc = (v: any) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let csv = cols.join(',') + '\n';
     for (const row of sorted) csv += cols.map(c => esc(c === 'Issued' || c === 'Received' ? fmtDate(row[c] as string) : row[c])).join(',') + '\n';
@@ -188,7 +189,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                 <table>
                   <thead>
                     <tr>
-                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','STD Unit','STD Extended','Future'].map(col => (
+                      {['Part Number','Rev','Description','Source','Purchase','Location','UOM','Issued','Received','Unexpired','Total','Allocated','STD Unit','STD Extended','Future'].map(col => (
                         <th key={col} onClick={() => toggleSort(col)}>
                           {col}<span className="sort-arrow">{sortCol === col ? (sortAsc ? ' ▲' : ' ▼') : ''}</span>
                         </th>
@@ -212,6 +213,7 @@ export const ImpulseInventory: React.FC<Props> = ({ userEmail: _userEmail }) => 
                           <td className="date-col">{fmtDate(r['Received'])}</td>
                           <td className="num">{fmtNum(r['Unexpired'])}</td>
                           <td className="num-bold">{fmtNum(r['Total'])}</td>
+                          <td className="num" style={{ color: r['Allocated'] > 0 ? '#7c3aed' : undefined }}>{fmtNum(r['Allocated'])}</td>
                           <td className="num">{fmtCurrency(r['STD Unit'])}</td>
                           <td className="num">{fmtCurrency(r['STD Extended'])}</td>
                           <td className="num-bold" style={{ color: r['Future'] > 0 ? '#c2410c' : undefined }}>{fmtNum(r['Future'])}</td>
