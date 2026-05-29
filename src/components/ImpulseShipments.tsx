@@ -56,9 +56,10 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
   // manual Year/Month filters so the two sources of truth don't fight.
   type QuickRange = '' | 'today' | 'thisweek' | 'thismonth';
   const [quickRange, setQuickRange] = useState<QuickRange>('');
-  // Gary can also pick a specific calendar day (YYYY-MM-DD).  Set/empty.
-  // Mutually exclusive with quickRange and the Year/Month dropdowns.
-  const [specificDate, setSpecificDate] = useState<string>('');
+  // Custom From/To range (YYYY-MM-DD).  Either bound may be empty (open-
+  // ended).  Mutually exclusive with quickRange and the Year/Month dropdowns.
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo,   setDateTo]   = useState<string>('');
 
   // Sort
   const [sortCol, setSortCol] = useState<string>('Ship Date');
@@ -133,10 +134,13 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
         const t = new Date(r['Ship Date'] || 0).getTime();
         if (isNaN(t) || t < quickRangeBounds[0] || t > quickRangeBounds[1]) return false;
       }
-      if (specificDate) {
-        // Compare YYYY-MM-DD prefix of the Ship Date, locale-independent.
+      if (dateFrom || dateTo) {
+        // String compare on YYYY-MM-DD prefix — locale-independent, no time
+        // zone gotchas.  Either bound may be empty (open-ended on that side).
         const shipISO = (r['Ship Date'] || '').substring(0, 10);
-        if (shipISO !== specificDate) return false;
+        if (!shipISO) return false;
+        if (dateFrom && shipISO < dateFrom) return false;
+        if (dateTo   && shipISO > dateTo)   return false;
       }
       if (s) {
         const hay = [
@@ -147,18 +151,25 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
       }
       return true;
     });
-  }, [allRows, search, filterCompany, filterSO, filterYear, filterMonth, quickRangeBounds, specificDate]);
+  }, [allRows, search, filterCompany, filterSO, filterYear, filterMonth, quickRangeBounds, dateFrom, dateTo]);
 
-  // Clicking a preset clears the manual Year/Month dropdowns AND the specific
-  // date picker so the different date-filter sources don't fight each other.
+  const customRangeActive = !!(dateFrom || dateTo);
+
+  // Clicking a preset clears the manual Year/Month dropdowns AND the custom
+  // From/To range so the different date-filter sources don't fight each other.
   function applyQuickRange(r: QuickRange) {
     setQuickRange(r);
-    if (r) { setFilterYear(''); setFilterMonth(''); setSpecificDate(''); }
+    if (r) { setFilterYear(''); setFilterMonth(''); setDateFrom(''); setDateTo(''); }
   }
-  function applySpecificDate(d: string) {
-    setSpecificDate(d);
+  function applyDateFrom(d: string) {
+    setDateFrom(d);
     if (d) { setQuickRange(''); setFilterYear(''); setFilterMonth(''); }
   }
+  function applyDateTo(d: string) {
+    setDateTo(d);
+    if (d) { setQuickRange(''); setFilterYear(''); setFilterMonth(''); }
+  }
+  function clearCustomRange() { setDateFrom(''); setDateTo(''); }
 
   // Sorted data
   const sorted = useMemo(() => {
@@ -366,7 +377,7 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
             { key: 'thismonth', label: 'This Month' },
             { key: '',          label: 'All Time' },
           ] as { key: QuickRange; label: string }[]).map(opt => {
-            const active = !specificDate && quickRange === opt.key;
+            const active = !customRangeActive && quickRange === opt.key;
             return (
               <button
                 key={opt.label}
@@ -385,26 +396,46 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
               >{opt.label}</button>
             );
           })}
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: '#64748b', textTransform: 'uppercase', alignSelf: 'center', marginLeft: 12 }}>or pick a day:</span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: '#64748b', textTransform: 'uppercase', alignSelf: 'center', marginLeft: 12 }}>or custom range:</span>
           <input
             type="date"
-            value={specificDate}
-            onChange={(e) => applySpecificDate(e.target.value)}
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => applyDateFrom(e.target.value)}
+            title="From (inclusive)"
             style={{
               padding: '6px 10px',
               borderRadius: 8,
               fontSize: 12,
               fontWeight: 700,
-              border: specificDate ? '1px solid #1a365d' : '1px solid #e2e8f0',
-              background: specificDate ? '#1a365d' : '#fff',
-              color: specificDate ? '#fff' : '#475569',
+              border: dateFrom ? '1px solid #1a365d' : '1px solid #e2e8f0',
+              background: dateFrom ? '#1a365d' : '#fff',
+              color: dateFrom ? '#fff' : '#475569',
               cursor: 'pointer',
             }}
           />
-          {specificDate && (
+          <span style={{ alignSelf: 'center', color: '#94a3b8', fontWeight: 700 }}>→</span>
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => applyDateTo(e.target.value)}
+            title="To (inclusive)"
+            style={{
+              padding: '6px 10px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              border: dateTo ? '1px solid #1a365d' : '1px solid #e2e8f0',
+              background: dateTo ? '#1a365d' : '#fff',
+              color: dateTo ? '#fff' : '#475569',
+              cursor: 'pointer',
+            }}
+          />
+          {customRangeActive && (
             <button
-              onClick={() => applySpecificDate('')}
-              title="Clear date"
+              onClick={clearCustomRange}
+              title="Clear date range"
               style={{
                 padding: '6px 10px',
                 borderRadius: 8,
@@ -434,11 +465,11 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
             <option value="">All Sales Orders</option>
             {sos.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select className="filter" value={filterYear} onChange={(e) => { setFilterYear(e.target.value); if (e.target.value) { setQuickRange(''); setSpecificDate(''); } }}>
+          <select className="filter" value={filterYear} onChange={(e) => { setFilterYear(e.target.value); if (e.target.value) { setQuickRange(''); clearCustomRange(); } }}>
             <option value="">All Years</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select className="filter" value={filterMonth} onChange={(e) => { setFilterMonth(e.target.value); if (e.target.value) { setQuickRange(''); setSpecificDate(''); } }}>
+          <select className="filter" value={filterMonth} onChange={(e) => { setFilterMonth(e.target.value); if (e.target.value) { setQuickRange(''); clearCustomRange(); } }}>
             <option value="">All Months</option>
             {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
