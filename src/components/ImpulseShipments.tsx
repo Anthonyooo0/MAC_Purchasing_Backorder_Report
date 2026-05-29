@@ -51,6 +51,11 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
   const [filterSO, setFilterSO] = useState('');
   const [filterYear, setFilterYear] = useState<string>(String(new Date().getFullYear()));
   const [filterMonth, setFilterMonth] = useState<string>('');
+  // Quick date-range presets so Gary can jump to today / this week / this month
+  // without fiddling with the Year + Month dropdowns.  Setting one clears the
+  // manual Year/Month filters so the two sources of truth don't fight.
+  type QuickRange = '' | 'today' | 'thisweek' | 'thismonth';
+  const [quickRange, setQuickRange] = useState<QuickRange>('');
 
   // Sort
   const [sortCol, setSortCol] = useState<string>('Ship Date');
@@ -91,6 +96,28 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
     [allRows]
   );
 
+  // Compute [start, end] millisecond bounds for the active quick range, or
+  // null if no quick range is active.  "This Week" = Monday through Sunday
+  // of the current calendar week.
+  const quickRangeBounds = useMemo<[number, number] | null>(() => {
+    if (!quickRange) return null;
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    let start: Date, end: Date;
+    if (quickRange === 'today') {
+      start = new Date(y, m, d, 0, 0, 0, 0);
+      end   = new Date(y, m, d, 23, 59, 59, 999);
+    } else if (quickRange === 'thisweek') {
+      const daysFromMonday = (now.getDay() + 6) % 7;
+      start = new Date(y, m, d - daysFromMonday, 0, 0, 0, 0);
+      end   = new Date(y, m, d - daysFromMonday + 6, 23, 59, 59, 999);
+    } else {
+      start = new Date(y, m, 1, 0, 0, 0, 0);
+      end   = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    }
+    return [start.getTime(), end.getTime()];
+  }, [quickRange]);
+
   // Filtered data
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
@@ -99,6 +126,10 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
       if (filterSO && r['SO No'] !== filterSO) return false;
       if (filterYear && String(r['Ship Year']) !== filterYear) return false;
       if (filterMonth && String(r['Ship Month']) !== filterMonth) return false;
+      if (quickRangeBounds) {
+        const t = new Date(r['Ship Date'] || 0).getTime();
+        if (isNaN(t) || t < quickRangeBounds[0] || t > quickRangeBounds[1]) return false;
+      }
       if (s) {
         const hay = [
           r['Ship No'], r['SO No'], r['Company'], r['Part No'],
@@ -108,7 +139,14 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
       }
       return true;
     });
-  }, [allRows, search, filterCompany, filterSO, filterYear, filterMonth]);
+  }, [allRows, search, filterCompany, filterSO, filterYear, filterMonth, quickRangeBounds]);
+
+  // Clicking a preset clears the manual Year/Month dropdowns so they don't
+  // silently narrow the result further than expected.
+  function applyQuickRange(r: QuickRange) {
+    setQuickRange(r);
+    if (r) { setFilterYear(''); setFilterMonth(''); }
+  }
 
   // Sorted data
   const sorted = useMemo(() => {
@@ -307,6 +345,36 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
           </div>
         </div>
 
+        {/* Quick date-range presets */}
+        <div className="controls" style={{ paddingBottom: 0, gap: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: '#64748b', textTransform: 'uppercase', alignSelf: 'center', marginRight: 4 }}>Quick range:</span>
+          {([
+            { key: 'today',     label: 'Today' },
+            { key: 'thisweek',  label: 'This Week' },
+            { key: 'thismonth', label: 'This Month' },
+            { key: '',          label: 'All Time' },
+          ] as { key: QuickRange; label: string }[]).map(opt => {
+            const active = quickRange === opt.key;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => applyQuickRange(opt.key)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: active ? '1px solid #1a365d' : '1px solid #e2e8f0',
+                  background: active ? '#1a365d' : '#fff',
+                  color: active ? '#fff' : '#475569',
+                  transition: 'all 0.15s ease',
+                }}
+              >{opt.label}</button>
+            );
+          })}
+        </div>
+
         {/* Controls */}
         <div className="controls">
           <input
@@ -322,11 +390,11 @@ export const ImpulseShipments: React.FC<Props> = ({ userEmail: _userEmail }) => 
             <option value="">All Sales Orders</option>
             {sos.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select className="filter" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+          <select className="filter" value={filterYear} onChange={(e) => { setFilterYear(e.target.value); if (e.target.value) setQuickRange(''); }}>
             <option value="">All Years</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select className="filter" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+          <select className="filter" value={filterMonth} onChange={(e) => { setFilterMonth(e.target.value); if (e.target.value) setQuickRange(''); }}>
             <option value="">All Months</option>
             {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
