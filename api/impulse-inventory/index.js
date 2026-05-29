@@ -149,6 +149,42 @@ FROM (
         NULL
     FROM INMASTX im2
     WHERE im2.FSAFETY > 0
+
+    UNION ALL
+
+    -- Open PO supply lines (POITEM where ordered > received).  RPMAVL shows
+    -- each open PO line as its own SUPPLY row with DEMAND blank; we surface
+    -- them as a demand-line entry labeled 'PO #####' so they show up in the
+    -- exploded table next to the JO/SO/Safety demand for the same part.
+    -- Filter: only parts that are already in MAC's active inventory (on-hand
+    -- or active JO/SO/Safety demand) so we don't drown the user in ancient
+    -- never-closed POs.
+    SELECT
+        RTRIM(pi.FPARTNO)                                  AS FPARTNO,
+        'PO ' + RTRIM(pi.FPONO)                            AS Demand,
+        (pi.FORDQTY - COALESCE(pi.FRCPQTY, 0))             AS QtyReqd,
+        pi.FREQDATE                                        AS NeedDate,
+        'OPEN'                                             AS Status,
+        NULLIF(RTRIM(pi.FSOKEY), '')                       AS SONO,
+        RTRIM(pi.FPONO)                                    AS PONO
+    FROM POITEM pi WITH (NOLOCK)
+    WHERE (pi.FORDQTY - COALESCE(pi.FRCPQTY, 0)) > 0
+      AND (
+            EXISTS (SELECT 1 FROM INONHD WITH (NOLOCK)
+                    WHERE FONHAND <> 0 AND RTRIM(FPARTNO) = RTRIM(pi.FPARTNO))
+         OR EXISTS (SELECT 1 FROM JODBOM jbx WITH (NOLOCK)
+                    INNER JOIN JOMAST jmx WITH (NOLOCK)
+                        ON RTRIM(jbx.FJOBNO) = RTRIM(jmx.FJOBNO)
+                    WHERE RTRIM(jbx.FBOMPART) = RTRIM(pi.FPARTNO)
+                      AND RTRIM(jmx.FSTATUS) NOT IN ('Closed', 'Cancelled', 'Complete')
+                      AND (jbx.FTOTQTY - COALESCE(jbx.FQTY_ISS, 0)) > 0)
+         OR EXISTS (SELECT 1 FROM SORELS srx WITH (NOLOCK)
+                    INNER JOIN SOMAST smx WITH (NOLOCK)
+                        ON RTRIM(srx.FSONO) = RTRIM(smx.FSONO)
+                    WHERE RTRIM(srx.FPARTNO) = RTRIM(pi.FPARTNO)
+                      AND RTRIM(smx.FSTATUS) NOT IN ('Closed', 'Cancelled')
+                      AND (srx.FORDERQTY - COALESCE(srx.FNINVSHIP, 0) - COALESCE(srx.FINVQTY, 0)) > 0)
+          )
 ) demand
 ORDER BY FPARTNO;
 `;
