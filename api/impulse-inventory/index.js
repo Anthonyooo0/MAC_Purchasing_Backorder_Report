@@ -156,19 +156,25 @@ FROM (
     -- each open PO line as its own SUPPLY row with DEMAND blank; we surface
     -- them as a demand-line entry labeled 'PO #####' so they show up in the
     -- exploded table next to the JO/SO/Safety demand for the same part.
-    -- Filter: only parts that are already in MAC's active inventory (on-hand
-    -- or active JO/SO/Safety demand) so we don't drown the user in ancient
-    -- never-closed POs.
+    -- Two filters:
+    --   (a) POMAST.FSTATUS NOT IN ('CLOSED', 'CANCELLED') — exclude header-
+    --       closed POs that still have stale open line qty (most of the
+    --       ~11,800 globally-open POITEM lines are from closed/cancelled POs).
+    --   (b) Part is already in MAC's active inventory (on-hand or active
+    --       JO/SO/Safety demand) — don't list POs for parts we aren't
+    --       tracking elsewhere in the report.
     SELECT
         RTRIM(pi.FPARTNO)                                  AS FPARTNO,
         'PO ' + RTRIM(pi.FPONO)                            AS Demand,
         (pi.FORDQTY - COALESCE(pi.FRCPQTY, 0))             AS QtyReqd,
         pi.FREQDATE                                        AS NeedDate,
-        'OPEN'                                             AS Status,
+        RTRIM(pm.FSTATUS)                                  AS Status,
         NULLIF(RTRIM(pi.FSOKEY), '')                       AS SONO,
         RTRIM(pi.FPONO)                                    AS PONO
     FROM POITEM pi WITH (NOLOCK)
+    INNER JOIN POMAST pm WITH (NOLOCK) ON RTRIM(pm.FPONO) = RTRIM(pi.FPONO)
     WHERE (pi.FORDQTY - COALESCE(pi.FRCPQTY, 0)) > 0
+      AND RTRIM(pm.FSTATUS) NOT IN ('CLOSED', 'CANCELLED')
       AND (
             EXISTS (SELECT 1 FROM INONHD WITH (NOLOCK)
                     WHERE FONHAND <> 0 AND RTRIM(FPARTNO) = RTRIM(pi.FPARTNO))
