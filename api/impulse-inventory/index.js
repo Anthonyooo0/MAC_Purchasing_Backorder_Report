@@ -167,7 +167,9 @@ FROM (
         RTRIM(pi.FPARTNO)                                  AS FPARTNO,
         'PO ' + RTRIM(pi.FPONO)                            AS Demand,
         (pi.FORDQTY - COALESCE(pi.FRCPQTY, 0))             AS QtyReqd,
-        pi.FREQDATE                                        AS NeedDate,
+        -- FLSTPDATE = Last Promise Date (most current vendor promise).
+        -- NULL out M2M's 1900-01-01 placeholder so the UI shows blank.
+        CASE WHEN pi.FLSTPDATE = '1900-01-01' THEN NULL ELSE pi.FLSTPDATE END AS NeedDate,
         RTRIM(pm.FSTATUS)                                  AS Status,
         NULLIF(RTRIM(pi.FSOKEY), '')                       AS SONO,
         RTRIM(pi.FPONO)                                    AS PONO
