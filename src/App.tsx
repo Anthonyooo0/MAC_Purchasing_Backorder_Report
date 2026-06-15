@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { ImpulseShipments } from './components/ImpulseShipments';
 import { ImpulseBacklog } from './components/ImpulseBacklog';
 import { ImpulseInventory } from './components/ImpulseInventory';
+import { OrphanParts } from './components/OrphanParts';
 import { reportsForUser } from './reports';
 
 function App() {
@@ -99,6 +100,9 @@ function App() {
         )}
         {activeReportId === 'impulse-inventory' && (
           <ImpulseInventory userEmail={currentUser} />
+        )}
+        {activeReportId === 'orphan-parts' && (
+          <OrphanParts userEmail={currentUser} />
         )}
       </main>
     </div>

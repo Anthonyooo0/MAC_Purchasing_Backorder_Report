@@ -37,6 +37,15 @@ export const REPORTS: ReportDef[] = [
     reportCode: 'IMPINV',
     allowedDomains: ['macproducts.net', 'macimpulse.net'],
   },
+  {
+    id: 'orphan-parts',
+    name: 'Orphan Parts Audit',
+    shortName: 'Orphan Parts',
+    description: 'Open SO releases referencing parts not in INMASTX — data integrity audit',
+    reportCode: 'ORPHAN',
+    allowedDomains: [],
+    allowedEmails: ['anthony.jimenez@macproducts.net'],
+  },
 ];
 
 export function reportsForUser(email: string | null): ReportDef[] {
