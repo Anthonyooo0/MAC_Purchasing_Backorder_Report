@@ -1,6 +1,7 @@
 const sql = require('mssql');
 
-let poolPromise = null;
+let impulsePoolPromise = null;
+let productsPoolPromise = null;
 
 function parseConnectionString(connString) {
   const parts = {};
@@ -22,30 +23,40 @@ function parseConnectionString(connString) {
   };
 }
 
-function getPool() {
-  if (!poolPromise) {
+function getImpulsePool() {
+  if (!impulsePoolPromise) {
     const connString = process.env.M2M_IMPULSE_CONNECTION_STRING;
     if (!connString) throw new Error('M2M_IMPULSE_CONNECTION_STRING not configured');
-    poolPromise = new sql.ConnectionPool(parseConnectionString(connString)).connect();
-    poolPromise.catch(() => { poolPromise = null; });
+    impulsePoolPromise = new sql.ConnectionPool(parseConnectionString(connString)).connect();
+    impulsePoolPromise.catch(() => { impulsePoolPromise = null; });
   }
-  return poolPromise;
+  return impulsePoolPromise;
+}
+
+function getProductsPool() {
+  if (!productsPoolPromise) {
+    const connString = process.env.M2M_CONNECTION_STRING;
+    if (!connString) throw new Error('M2M_CONNECTION_STRING not configured');
+    productsPoolPromise = new sql.ConnectionPool(parseConnectionString(connString)).connect();
+    productsPoolPromise.catch(() => { productsPoolPromise = null; });
+  }
+  return productsPoolPromise;
 }
 
 // ---------------------------------------------------------------------------
 // MAC Orphan Parts Audit
 // Finds open Sales Order releases that reference a part number which doesn't
-// exist in INMASTX (item master).  Catches data-integrity holes — SOs
-// created against typo'd or non-existent parts that won't roll into MRP /
-// inventory cleanly.
+// exist in INMASTX (item master).  Catches data-integrity holes — SOs created
+// against typo'd or non-existent parts that won't roll into MRP / inventory
+// cleanly.
 //
-// Currently scoped to MAC Impulse only (existing m2m_impulse_reader user
-// lacks rights to M2MDATA99).  Once IT grants cross-DB access we'll add a
-// MAC Products UNION branch here.
+// Runs the same SQL against both M2M databases via separate connection pools:
+//   M2M_IMPULSE_CONNECTION_STRING  → MAC Impulse  (M2MDATA66 / m2m_impulse_reader)
+//   M2M_CONNECTION_STRING          → MAC Products (M2MDATA99 / m2m_reader)
+// Results from both are merged in Node and tagged with a Company column.
 // ---------------------------------------------------------------------------
 const ORPHAN_SQL = `
 SELECT
-    'MAC Impulse'                                   AS Company,
     'SORELS'                                        AS Source,
     RTRIM(sr.FSONO)                                 AS [SO No],
     RTRIM(sr.FENUMBER)                              AS [Item No],
@@ -77,12 +88,16 @@ WHERE sr.FORDERQTY > COALESCE(sr.FNINVSHIP, 0) + COALESCE(sr.FINVQTY, 0)
 ORDER BY [Due Date], [SO No], [Item No];
 `;
 
+async function queryOrphans(pool, companyLabel) {
+  const result = await pool.request().query(ORPHAN_SQL);
+  return result.recordset.map(row => ({ Company: companyLabel, ...row }));
+}
+
 const CORS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
 };
 
-// 10-minute in-memory cache like the inventory endpoint
 const CACHE_TTL_MS = 10 * 60 * 1000;
 let cachedBody = null;
 let cachedAt = 0;
@@ -101,12 +116,25 @@ module.exports = async function (context, req) {
   let lastErr;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const pool = await getPool();
-      const result = await pool.request().query(ORPHAN_SQL);
+      const [impulsePool, productsPool] = await Promise.all([
+        getImpulsePool(),
+        getProductsPool(),
+      ]);
+      const [impulseRows, productsRows] = await Promise.all([
+        queryOrphans(impulsePool,  'MAC Impulse'),
+        queryOrphans(productsPool, 'MAC Products'),
+      ]);
+      const rows = [...impulseRows, ...productsRows].sort((a, b) => {
+        if (a.Company !== b.Company) return a.Company.localeCompare(b.Company);
+        const ad = new Date(a['Due Date'] || 0).getTime();
+        const bd = new Date(b['Due Date'] || 0).getTime();
+        if (ad !== bd) return ad - bd;
+        return (a['SO No'] || '').localeCompare(b['SO No'] || '');
+      });
       const body = JSON.stringify({
         generatedAt: new Date().toISOString(),
-        rowCount: result.recordset.length,
-        rows: result.recordset,
+        rowCount: rows.length,
+        rows,
       });
       cachedBody = body;
       cachedAt = Date.now();
@@ -122,7 +150,8 @@ module.exports = async function (context, req) {
       const isConnErr = /failed to connect|timeout|ESOCKET|ETIMEOUT|ECONNCLOSED|ConnectionError/i.test(msg);
       if (attempt < 2 && isConnErr) {
         context.log.warn(`Orphan parts attempt ${attempt} cold-start, retrying:`, msg);
-        poolPromise = null;
+        impulsePoolPromise = null;
+        productsPoolPromise = null;
         await new Promise(r => setTimeout(r, 2000));
       } else {
         context.log.error('Orphan parts query error:', msg);
