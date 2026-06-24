@@ -38,6 +38,14 @@ export const REPORTS: ReportDef[] = [
     allowedDomains: ['macproducts.net', 'macimpulse.net'],
   },
   {
+    id: 'daily-sales',
+    name: 'Daily Sales Detail',
+    shortName: 'Daily Sales',
+    description: 'Open SO lines with item master, vendor, locations, and make/buy enrichment (Phase 1)',
+    reportCode: 'DLYSALE',
+    allowedDomains: ['macproducts.net', 'macimpulse.net'],
+  },
+  {
     id: 'orphan-parts',
     name: 'Orphan Parts Audit',
     shortName: 'Orphan Parts',

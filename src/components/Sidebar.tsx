@@ -142,6 +142,14 @@ function ReportIcon({ code }: { code: string }) {
       </svg>
     );
   }
+  if (code === 'DLYSALE') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+        <path d="M3 3v18h18" />
+        <path d="M7 12l4-4 4 4 6-6" />
+      </svg>
+    );
+  }
   if (code === 'ORPHAN') {
     return (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
